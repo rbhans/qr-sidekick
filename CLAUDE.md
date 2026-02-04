@@ -1,39 +1,76 @@
 # QR Sidekick - Project Instructions
 
-## CRITICAL: Project Location
-**This is the ONLY correct project folder:**
-```
-/Users/benhansen/Developer/qr-sidekick/qr_sidekick
-```
-
-DO NOT use `/Users/benhansen/Documents/Personal/Github/qr-sidekick/` - that is an old/duplicate folder.
-
 ## Project Overview
-QR Sidekick - A Flutter app for scanning QR codes on BAS (Building Automation System) equipment.
+QR Sidekick is a Flutter app for HVAC technicians to scan QR codes on Building Automation System (BAS) equipment and view real-time data from Niagara stations.
 
 ## Tech Stack
-- Flutter/Dart
-- Riverpod for state management
-- Supabase for backend
-- RevenueCat for subscriptions
-- GoRouter for navigation
+- **Framework**: Flutter/Dart (SDK ^3.10.1)
+- **State Management**: Riverpod with code generation
+- **Backend**: Supabase
+- **Subscriptions**: RevenueCat
+- **Navigation**: GoRouter
+- **Models**: Freezed for immutable data classes
+- **QR Scanning**: mobile_scanner
+
+## Project Structure
+```
+lib/
+├── app.dart              # App widget and router configuration
+├── main.dart             # Entry point
+├── core/
+│   ├── config/           # Environment configuration
+│   ├── constants/        # App and Niagara constants
+│   ├── errors/           # Custom exceptions
+│   └── theme/            # App colors and theme
+├── data/
+│   ├── datasources/      # Supabase data source
+│   ├── models/           # Freezed data models
+│   ├── repositories/     # Data repositories
+│   └── services/         # Niagara client, scan history, subscriptions
+└── presentation/
+    ├── providers/        # Riverpod providers
+    ├── screens/          # UI screens (auth, admin, equipment, scan)
+    └── widgets/          # Reusable widgets
+```
 
 ## App Colors
-- Primary (Amber): #F5A623
-- Background (Dark): #0A0A0A
-- Surface: #141414
+- Primary (Amber): `#F5A623`
+- Background (Dark): `#0A0A0A`
+- Surface: `#141414`
 
-## Supabase
-- URL: https://cwdoklplunlaqakiyagb.supabase.co
-- Anon key is configured in `.vscode/launch.json`
+## Environment Setup
+1. Copy `.env.example` to `.env`
+2. Add your Supabase credentials:
+   ```
+   SUPABASE_URL=https://cwdoklplunlaqakiyagb.supabase.co
+   SUPABASE_ANON_KEY=<your-anon-key>
+   ```
+3. The anon key can also be found in `.vscode/launch.json`
 
-## Running the App
-Use VS Code launch configurations or:
+## Development Commands
+
+### Running the App
 ```bash
+# Using VS Code launch configurations (recommended)
+# Or via command line:
+flutter run
+
+# With explicit env var (if not using .env file):
 flutter run --dart-define=SUPABASE_ANON_KEY=<key>
 ```
 
-## Build Commands
+### Code Generation
+Run after modifying Freezed models or Riverpod providers:
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+### Testing
+```bash
+flutter test
+```
+
+### Building
 ```bash
 # iOS
 flutter build ipa
@@ -42,6 +79,30 @@ flutter build ipa
 flutter build appbundle
 ```
 
+## Key Routes
+| Path | Screen | Description |
+|------|--------|-------------|
+| `/` | ScanScreen | QR scanner (home) |
+| `/login` | LoginScreen | User login |
+| `/register` | RegisterScreen | User registration |
+| `/equipment/:qrId` | EquipmentScreen | Equipment details after scan |
+| `/admin` | AdminScreen | Admin dashboard |
+| `/admin/stations` | StationsScreen | Manage Niagara stations |
+| `/admin/equipment` | EquipmentConfigsScreen | Manage equipment configs |
+| `/account` | AccountScreen | User account settings |
+
+## Data Models
+All models use Freezed for immutability. Key models:
+- `Station` - Niagara station connection info
+- `EquipmentConfig` - Equipment QR code configuration
+- `Point` - Data point from Niagara station
+- `TreeNode` - Niagara navigation tree node
+- `UserProfile` - User profile data
+
 ## Bundle IDs
-- iOS: com.basidekick.qrSidekick
-- Android: com.basidekick.qr_sidekick
+- iOS: `com.basidekick.qrSidekick`
+- Android: `com.basidekick.qr_sidekick`
+
+## Supabase
+- Project URL: https://cwdoklplunlaqakiyagb.supabase.co
+- Tables: stations, equipment_configs, user_profiles, etc.
