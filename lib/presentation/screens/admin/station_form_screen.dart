@@ -6,7 +6,6 @@ import '../../../data/models/station.dart';
 import '../../../data/services/niagara_client.dart';
 import '../../providers/station_provider.dart';
 import '../../providers/niagara_provider.dart';
-import '../../providers/organization_provider.dart';
 
 /// Add/Edit station screen
 class StationFormScreen extends ConsumerStatefulWidget {
@@ -32,8 +31,6 @@ class _StationFormScreenState extends ConsumerState<StationFormScreen> {
   bool _isInitialized = false;
   bool _isTesting = false;
   bool _hasLocalCredentials = false;
-  bool _hasSharedCredentials = false;
-  bool _shareWithTeam = true; // Default to sharing
   NiagaraConnectionResult? _testResult;
 
   @override
@@ -56,16 +53,11 @@ class _StationFormScreenState extends ConsumerState<StationFormScreen> {
 
     // Check credential status
     final client = ref.read(niagaraClientProvider);
-    final credentialsRepo = ref.read(stationCredentialsRepositoryProvider);
-
     final hasLocal = await client.hasCredentials(station.id);
-    final hasShared = await credentialsRepo.hasSharedCredentials(station.id);
 
     if (mounted) {
       setState(() {
         _hasLocalCredentials = hasLocal;
-        _hasSharedCredentials = hasShared;
-        _shareWithTeam = hasShared; // Match existing state
       });
     }
   }
@@ -143,7 +135,6 @@ class _StationFormScreenState extends ConsumerState<StationFormScreen> {
     try {
       final notifier = ref.read(stationNotifierProvider.notifier);
       final client = ref.read(niagaraClientProvider);
-      final credentialsRepo = ref.read(stationCredentialsRepositoryProvider);
       String stationId;
 
       if (widget.isEditing) {
@@ -156,19 +147,7 @@ class _StationFormScreenState extends ConsumerState<StationFormScreen> {
         );
         stationId = widget.stationId!;
       } else {
-        // Get user's organizations (fetch directly if provider not ready)
-        final orgRepo = ref.read(organizationRepositoryProvider);
-        final orgs = await orgRepo.getUserOrganizations();
-
-        if (orgs.isEmpty) {
-          throw Exception('You must belong to an organization to add stations');
-        }
-
-        // Use the first organization (could add org picker in future)
-        final organizationId = orgs.first.id;
-
         final station = await notifier.createStation(
-          organizationId: organizationId,
           name: _nameController.text.trim(),
           host: _hostController.text.trim(),
           port: int.parse(_portController.text.trim()),
@@ -180,27 +159,11 @@ class _StationFormScreenState extends ConsumerState<StationFormScreen> {
       // Handle credentials if provided
       if (_usernameController.text.isNotEmpty &&
           _passwordController.text.isNotEmpty) {
-        // Always save locally for this user
         await client.storeCredentials(
           stationId: stationId,
           username: _usernameController.text,
           password: _passwordController.text,
         );
-
-        // Save to Supabase if sharing with team
-        if (_shareWithTeam) {
-          await credentialsRepo.saveSharedCredentials(
-            stationId: stationId,
-            username: _usernameController.text,
-            password: _passwordController.text,
-          );
-        } else if (_hasSharedCredentials) {
-          // Remove shared credentials if toggle was turned off
-          await credentialsRepo.deleteSharedCredentials(stationId);
-        }
-      } else if (!_shareWithTeam && _hasSharedCredentials) {
-        // Remove shared credentials if toggle was turned off (even without new credentials)
-        await credentialsRepo.deleteSharedCredentials(stationId);
       }
 
       if (mounted) {
@@ -368,7 +331,7 @@ class _StationFormScreenState extends ConsumerState<StationFormScreen> {
                       letterSpacing: 1,
                     ),
                   ),
-                  if (_hasLocalCredentials || _hasSharedCredentials) ...[
+                  if (_hasLocalCredentials) ...[
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -376,9 +339,9 @@ class _StationFormScreenState extends ConsumerState<StationFormScreen> {
                         color: AppColors.success.withValues(alpha: 0.1),
                         border: Border.all(color: AppColors.success),
                       ),
-                      child: Text(
-                        _hasSharedCredentials ? 'SHARED' : 'LOCAL',
-                        style: const TextStyle(
+                      child: const Text(
+                        'SAVED',
+                        style: TextStyle(
                           fontFamily: 'JetBrains Mono',
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
@@ -391,9 +354,9 @@ class _StationFormScreenState extends ConsumerState<StationFormScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                _hasLocalCredentials || _hasSharedCredentials
+                _hasLocalCredentials
                     ? 'Enter new credentials to update.'
-                    : 'Credentials are stored securely.',
+                    : 'Credentials are stored securely on device.',
                 style: const TextStyle(
                   fontSize: 12,
                   color: AppColors.textTertiary,
@@ -420,55 +383,7 @@ class _StationFormScreenState extends ConsumerState<StationFormScreen> {
                   prefixIcon: Icon(Icons.lock_outline),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Share with team toggle
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _shareWithTeam ? Icons.people : Icons.person,
-                      color: _shareWithTeam ? AppColors.primary : AppColors.textTertiary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Share with team',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                            ),
-                          ),
-                          Text(
-                            _shareWithTeam
-                                ? 'All team members can access this station'
-                                : 'Only you can access (others must enter credentials)',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textTertiary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: _shareWithTeam,
-                      onChanged: (value) => setState(() => _shareWithTeam = value),
-                      activeColor: AppColors.primary,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
               // Test connection button
               OutlinedButton.icon(
@@ -583,12 +498,9 @@ class _StationFormScreenState extends ConsumerState<StationFormScreen> {
               Navigator.pop(context);
               setState(() => _isLoading = true);
               try {
-                // Delete stored credentials (both local and shared)
+                // Delete stored credentials
                 final client = ref.read(niagaraClientProvider);
-                final credentialsRepo = ref.read(stationCredentialsRepositoryProvider);
-
                 await client.deleteCredentials(widget.stationId!);
-                await credentialsRepo.deleteSharedCredentials(widget.stationId!);
 
                 // Delete station
                 await ref

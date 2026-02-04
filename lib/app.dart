@@ -7,7 +7,6 @@ import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/auth/register_screen.dart';
 import 'presentation/screens/auth/forgot_password_screen.dart';
 import 'presentation/screens/onboarding/onboarding_screen.dart';
-import 'presentation/screens/organization/create_organization_screen.dart';
 import 'presentation/screens/scan/scan_screen.dart';
 import 'presentation/screens/equipment/equipment_screen.dart';
 import 'presentation/screens/admin/admin_screen.dart';
@@ -16,7 +15,6 @@ import 'presentation/screens/admin/station_form_screen.dart';
 import 'presentation/screens/admin/equipment_configs_screen.dart';
 import 'presentation/screens/admin/equipment_form_screen.dart';
 import 'presentation/screens/admin/qr_code_screen.dart';
-import 'presentation/screens/team/team_screen.dart';
 import 'presentation/screens/settings/account_screen.dart';
 
 /// Main app widget
@@ -92,20 +90,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/onboarding',
         name: 'onboarding',
         builder: (context, state) => const OnboardingScreen(),
-      ),
-
-      // Create organization
-      GoRoute(
-        path: '/create-organization',
-        name: 'createOrganization',
-        builder: (context, state) => const CreateOrganizationScreen(),
-      ),
-
-      // Team management
-      GoRoute(
-        path: '/team',
-        name: 'team',
-        builder: (context, state) => const TeamScreen(),
       ),
 
       // Account settings

@@ -33,7 +33,6 @@ class StationRepository {
 
   /// Create a new station
   Future<Station> createStation({
-    required String organizationId,
     required String name,
     required String host,
     int port = 443,
@@ -41,6 +40,20 @@ class StationRepository {
     String? fingerprint,
   }) async {
     final userId = _client.auth.currentUser!.id;
+
+    // Get user's organization (they should have one from website signup)
+    final memberResponse = await _client
+        .from('qsk_organization_members')
+        .select('organization_id')
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle();
+
+    if (memberResponse == null) {
+      throw Exception('You must belong to an organization to add stations');
+    }
+
+    final organizationId = memberResponse['organization_id'] as String;
 
     final response = await _client
         .from('qsk_stations')

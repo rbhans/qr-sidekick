@@ -40,14 +40,12 @@ class StationNotifier extends StateNotifier<AsyncValue<List<Station>>> {
   }
 
   Future<Station> createStation({
-    required String organizationId,
     required String name,
     required String host,
     int port = 443,
     StationProtocol protocol = StationProtocol.https,
   }) async {
     final station = await _repository.createStation(
-      organizationId: organizationId,
       name: name,
       host: host,
       port: port,
