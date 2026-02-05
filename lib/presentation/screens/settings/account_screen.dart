@@ -218,6 +218,17 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     }
   }
 
+  Future<void> _openPrivacyPolicy() async {
+    final uri = Uri.parse('https://basidekick.com/tools/qsk/privacy');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open privacy policy')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
@@ -351,12 +362,23 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
           ),
           const SizedBox(height: 12),
           Card(
-            child: ListTile(
-              leading: const Icon(Icons.open_in_new),
-              title: const Text('Visit basidekick.com'),
-              subtitle: const Text('Guides, billing, and account tools'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: _openWebsite,
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.open_in_new),
+                  title: const Text('Visit basidekick.com'),
+                  subtitle: const Text('Guides, billing, and account tools'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _openWebsite,
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.privacy_tip_outlined),
+                  title: const Text('Privacy Policy'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _openPrivacyPolicy,
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
