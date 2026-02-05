@@ -1,8 +1,15 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import '../../core/config/env_config.dart';
+
+void _log(String message) {
+  if (kDebugMode) {
+    debugPrint('SubscriptionService: $message');
+  }
+}
 
 /// Subscription tier based on equipment limits
 enum SubscriptionTier {
@@ -97,7 +104,7 @@ class SubscriptionService {
 
       final apiKey = _apiKeyForPlatform();
       if (apiKey.isEmpty) {
-        print('RevenueCat API key missing for this platform.');
+        _log('RevenueCat API key missing for this platform.');
         return;
       }
 
@@ -105,7 +112,7 @@ class SubscriptionService {
       _isInitialized = true;
     } catch (e) {
       // Avoid crashing the app if RevenueCat isn't configured correctly.
-      print('RevenueCat initialization failed: $e');
+      _log('RevenueCat initialization failed: $e');
     }
   }
 
@@ -125,7 +132,7 @@ class SubscriptionService {
       final customerInfo = await Purchases.getCustomerInfo();
       return _parseCustomerInfo(customerInfo);
     } catch (e) {
-      print('Error getting subscription state: $e');
+      _log('Error getting subscription state: $e');
       return const SubscriptionState();
     }
   }
@@ -164,7 +171,7 @@ class SubscriptionService {
       return paywallResult == PaywallResult.purchased ||
              paywallResult == PaywallResult.restored;
     } catch (e) {
-      print('Error showing paywall: $e');
+      _log('Error showing paywall: $e');
       return false;
     }
   }
@@ -175,7 +182,7 @@ class SubscriptionService {
       final customerInfo = await Purchases.restorePurchases();
       return _parseCustomerInfo(customerInfo);
     } catch (e) {
-      print('Error restoring purchases: $e');
+      _log('Error restoring purchases: $e');
       return const SubscriptionState();
     }
   }
@@ -185,7 +192,7 @@ class SubscriptionService {
     try {
       await Purchases.logIn(userId);
     } catch (e) {
-      print('Error identifying user: $e');
+      _log('Error identifying user: $e');
     }
   }
 
@@ -194,7 +201,7 @@ class SubscriptionService {
     try {
       await Purchases.logOut();
     } catch (e) {
-      print('Error logging out from RevenueCat: $e');
+      _log('Error logging out from RevenueCat: $e');
     }
   }
 
