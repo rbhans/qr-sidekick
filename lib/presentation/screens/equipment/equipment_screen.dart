@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/equipment_config.dart';
 import '../../../data/models/station.dart';
 import '../../../data/datasources/supabase_datasource.dart';
+import '../../../data/services/niagara_client.dart';
 import '../../providers/equipment_config_provider.dart';
 import '../../providers/station_provider.dart';
 import '../../providers/niagara_provider.dart';
@@ -226,6 +227,44 @@ class _EquipmentScreenState extends ConsumerState<EquipmentScreen> {
         pointPaths: _config!.pointPaths,
       );
 
+      final authFailures = results.whereType<NiagaraPointAuthFailed>().toList();
+      if (authFailures.isNotEmpty) {
+        final authFailure = authFailures.first;
+        await niagaraClient.deleteCredentials(_station!.id);
+        final placeholderPoints = _config!.pointPaths.map((path) {
+          return PointValue(
+            path: path,
+            name: path.split('/').last,
+            value: '--',
+            status: 'error',
+          );
+        }).toList();
+
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _isConnected = false;
+            _credentialSource = CredentialSource.none;
+            _points = placeholderPoints;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authFailure.message),
+              backgroundColor: AppColors.error,
+              action: SnackBarAction(
+                label: 'Update',
+                onPressed: _showCredentialsDialog,
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
+      final connectionFailures =
+          results.whereType<NiagaraPointConnectionFailed>().toList();
+
       final points = <PointValue>[];
       bool anySuccess = false;
 
@@ -251,6 +290,16 @@ class _EquipmentScreenState extends ConsumerState<EquipmentScreen> {
         _isConnected = anySuccess;
         _lastUpdate = DateTime.now();
       });
+
+      if (connectionFailures.isNotEmpty && mounted) {
+        final connectionFailure = connectionFailures.first;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(connectionFailure.message),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     } catch (e) {
       setState(() {
         _isLoading = false;

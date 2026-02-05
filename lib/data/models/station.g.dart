@@ -9,7 +9,7 @@ part of 'station.dart';
 _$StationImpl _$$StationImplFromJson(Map<String, dynamic> json) =>
     _$StationImpl(
       id: json['id'] as String,
-      organizationId: json['organization_id'] as String,
+      organizationId: json['organization_id'] as String?,
       name: json['name'] as String,
       host: json['host'] as String,
       port: (json['port'] as num?)?.toInt() ?? 443,

@@ -30,7 +30,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     super.dispose();
   }
 
-  void _onDetect(BarcodeCapture capture) {
+  Future<void> _onDetect(BarcodeCapture capture) async {
     if (_isProcessing) return;
 
     final List<Barcode> barcodes = capture.barcodes;
@@ -52,7 +52,17 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
 
     if (uuidRegex.hasMatch(code)) {
       // Valid QR code - navigate to equipment view
-      context.push('/equipment/$code');
+      try {
+        await _controller.stop();
+        await context.push('/equipment/$code');
+      } finally {
+        if (!mounted) return;
+        await _controller.start();
+        setState(() {
+          _isProcessing = false;
+          _lastScannedCode = null;
+        });
+      }
     } else {
       // Invalid QR code
       ScaffoldMessenger.of(context).showSnackBar(

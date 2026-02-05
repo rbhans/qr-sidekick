@@ -766,6 +766,14 @@ class NiagaraClient {
         );
         return NiagaraPointResult.success(point);
       }).toList();
+    } else if (snapshotResult is NiagaraSnapshotAuthFailed) {
+      return pointPaths
+          .map((path) => NiagaraPointResult.authFailed(snapshotResult.message))
+          .toList();
+    } else if (snapshotResult is NiagaraSnapshotConnectionFailed) {
+      return pointPaths
+          .map((path) => NiagaraPointResult.connectionFailed(snapshotResult.message))
+          .toList();
     } else {
       // Return error for all points
       final errorMsg = snapshotResult is NiagaraSnapshotError

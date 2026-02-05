@@ -94,7 +94,7 @@ class _StationFormScreenState extends ConsumerState<StationFormScreen> {
     // Create a temporary station object for testing
     final testStation = Station(
       id: widget.stationId ?? 'temp',
-      organizationId: 'temp',
+      organizationId: null,
       name: _nameController.text.trim(),
       host: _hostController.text.trim(),
       port: int.tryParse(_portController.text.trim()) ?? 443,
