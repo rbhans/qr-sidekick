@@ -23,7 +23,7 @@ Station _$StationFromJson(Map<String, dynamic> json) {
 mixin _$Station {
   String get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'organization_id')
-  String get organizationId => throw _privateConstructorUsedError;
+  String? get organizationId => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String get host => throw _privateConstructorUsedError;
   int get port => throw _privateConstructorUsedError;
@@ -52,7 +52,7 @@ abstract class $StationCopyWith<$Res> {
   @useResult
   $Res call({
     String id,
-    @JsonKey(name: 'organization_id') String organizationId,
+    @JsonKey(name: 'organization_id') String? organizationId,
     String name,
     String host,
     int port,
@@ -80,7 +80,7 @@ class _$StationCopyWithImpl<$Res, $Val extends Station>
   @override
   $Res call({
     Object? id = null,
-    Object? organizationId = null,
+    Object? organizationId = freezed,
     Object? name = null,
     Object? host = null,
     Object? port = null,
@@ -96,10 +96,10 @@ class _$StationCopyWithImpl<$Res, $Val extends Station>
                 ? _value.id
                 : id // ignore: cast_nullable_to_non_nullable
                       as String,
-            organizationId: null == organizationId
+            organizationId: freezed == organizationId
                 ? _value.organizationId
                 : organizationId // ignore: cast_nullable_to_non_nullable
-                      as String,
+                      as String?,
             name: null == name
                 ? _value.name
                 : name // ignore: cast_nullable_to_non_nullable
@@ -148,7 +148,7 @@ abstract class _$$StationImplCopyWith<$Res> implements $StationCopyWith<$Res> {
   @useResult
   $Res call({
     String id,
-    @JsonKey(name: 'organization_id') String organizationId,
+    @JsonKey(name: 'organization_id') String? organizationId,
     String name,
     String host,
     int port,
@@ -175,7 +175,7 @@ class __$$StationImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? organizationId = null,
+    Object? organizationId = freezed,
     Object? name = null,
     Object? host = null,
     Object? port = null,
@@ -191,10 +191,10 @@ class __$$StationImplCopyWithImpl<$Res>
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
                   as String,
-        organizationId: null == organizationId
+        organizationId: freezed == organizationId
             ? _value.organizationId
             : organizationId // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
         name: null == name
             ? _value.name
             : name // ignore: cast_nullable_to_non_nullable
@@ -237,7 +237,7 @@ class __$$StationImplCopyWithImpl<$Res>
 class _$StationImpl extends _Station {
   const _$StationImpl({
     required this.id,
-    @JsonKey(name: 'organization_id') required this.organizationId,
+    @JsonKey(name: 'organization_id') this.organizationId,
     required this.name,
     required this.host,
     this.port = 443,
@@ -255,7 +255,7 @@ class _$StationImpl extends _Station {
   final String id;
   @override
   @JsonKey(name: 'organization_id')
-  final String organizationId;
+  final String? organizationId;
   @override
   final String name;
   @override
@@ -339,7 +339,7 @@ class _$StationImpl extends _Station {
 abstract class _Station extends Station {
   const factory _Station({
     required final String id,
-    @JsonKey(name: 'organization_id') required final String organizationId,
+    @JsonKey(name: 'organization_id') final String? organizationId,
     required final String name,
     required final String host,
     final int port,
@@ -357,7 +357,7 @@ abstract class _Station extends Station {
   String get id;
   @override
   @JsonKey(name: 'organization_id')
-  String get organizationId;
+  String? get organizationId;
   @override
   String get name;
   @override

@@ -63,7 +63,7 @@ final currentProfileProvider = AutoDisposeProvider<UserProfile?>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CurrentProfileRef = AutoDisposeProviderRef<UserProfile?>;
-String _$authHash() => r'24907cf610076cde277d5ac86643c988dfa6c3a5';
+String _$authHash() => r'77d0978487c143237fc302881d383200568d05b0';
 
 /// Auth state notifier
 ///

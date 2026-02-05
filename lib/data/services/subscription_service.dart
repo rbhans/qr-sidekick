@@ -2,10 +2,11 @@ import 'dart:io';
 
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
+import '../../core/config/env_config.dart';
 
 /// Subscription tier based on equipment limits
 enum SubscriptionTier {
-  free,      // 5 equipment max
+  free,      // 1 equipment max
   basic,     // 50 equipment, $3/mo
   pro,       // 100 equipment, $5/mo
   unlimited, // Unlimited, $10/mo
@@ -16,7 +17,7 @@ extension SubscriptionTierLimits on SubscriptionTier {
   int get equipmentLimit {
     switch (this) {
       case SubscriptionTier.free:
-        return 5;
+        return 1;
       case SubscriptionTier.basic:
         return 50;
       case SubscriptionTier.pro:
@@ -42,7 +43,7 @@ extension SubscriptionTierLimits on SubscriptionTier {
   String get description {
     switch (this) {
       case SubscriptionTier.free:
-        return '5 equipment max';
+        return '1 equipment max';
       case SubscriptionTier.basic:
         return '50 equipment • \$3/mo';
       case SubscriptionTier.pro:
@@ -80,8 +81,6 @@ class SubscriptionState {
 
 /// Service for managing RevenueCat subscriptions
 class SubscriptionService {
-  static const String _apiKey = 'test_UfFrnfNoguyPQRkbVKHIIrYZhqT';
-
   // Entitlement IDs from RevenueCat dashboard
   static const String _basicEntitlement = 'basic';
   static const String _proEntitlement = 'pro';
@@ -93,19 +92,31 @@ class SubscriptionService {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    await Purchases.setLogLevel(LogLevel.debug);
+    try {
+      await Purchases.setLogLevel(LogLevel.debug);
 
-    PurchasesConfiguration configuration;
-    if (Platform.isIOS) {
-      configuration = PurchasesConfiguration(_apiKey);
-    } else if (Platform.isAndroid) {
-      configuration = PurchasesConfiguration(_apiKey);
-    } else {
-      throw UnsupportedError('Platform not supported');
+      final apiKey = _apiKeyForPlatform();
+      if (apiKey.isEmpty) {
+        print('RevenueCat API key missing for this platform.');
+        return;
+      }
+
+      await Purchases.configure(PurchasesConfiguration(apiKey));
+      _isInitialized = true;
+    } catch (e) {
+      // Avoid crashing the app if RevenueCat isn't configured correctly.
+      print('RevenueCat initialization failed: $e');
     }
+  }
 
-    await Purchases.configure(configuration);
-    _isInitialized = true;
+  String _apiKeyForPlatform() {
+    if (Platform.isIOS) {
+      return EnvConfig.revenueCatIosApiKey;
+    }
+    if (Platform.isAndroid) {
+      return EnvConfig.revenueCatAndroidApiKey;
+    }
+    return '';
   }
 
   /// Get current subscription state

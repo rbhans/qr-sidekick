@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/errors/app_exception.dart' as app_errors;
 import '../../data/datasources/supabase_datasource.dart';
 import '../../data/models/user_profile.dart';
+import 'subscription_provider.dart';
 
 part 'auth_provider.g.dart';
 
@@ -57,8 +58,12 @@ class Auth extends _$Auth {
         // Fetch profile when user signs in
         final profile = await _fetchProfile(user.id);
         state = AppAuthState(user: user, profile: profile);
+        unawaited(
+          ref.read(subscriptionStateProvider.notifier).identifyUser(user.id),
+        );
       } else {
         state = const AppAuthState();
+        unawaited(ref.read(subscriptionStateProvider.notifier).logOut());
       }
     });
 
@@ -73,6 +78,9 @@ class Auth extends _$Auth {
       _fetchProfile(currentUser.id).then((profile) {
         state = AppAuthState(user: currentUser, profile: profile);
       });
+      unawaited(
+        ref.read(subscriptionStateProvider.notifier).identifyUser(currentUser.id),
+      );
       return AppAuthState(user: currentUser, isLoading: true);
     }
 
@@ -123,6 +131,13 @@ class Auth extends _$Auth {
         error: 'An unexpected error occurred',
       );
       rethrow;
+    }
+  }
+
+  /// Clear any auth error currently shown
+  void clearError() {
+    if (state.error != null) {
+      state = state.copyWith(error: null);
     }
   }
 

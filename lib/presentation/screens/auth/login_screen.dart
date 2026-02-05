@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 
@@ -78,15 +79,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             password: _passwordController.text,
           );
       // Navigation handled by router redirect
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+    } catch (_) {
+      // Error message is surfaced via authState.error.
+    }
+  }
+
+  Future<void> _openWebsite() async {
+    final uri = Uri.parse('https://www.basidekick.com');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open basidekick.com')),
+      );
     }
   }
 
@@ -161,6 +166,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
+                    onChanged: (_) => ref.read(authProvider.notifier).clearError(),
                     decoration: const InputDecoration(
                       labelText: 'Email',
                       prefixIcon: Icon(Icons.email_outlined),
@@ -183,6 +189,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _handleLogin(),
+                    onChanged: (_) => ref.read(authProvider.notifier).clearError(),
                     decoration: InputDecoration(
                       labelText: 'Password',
                       prefixIcon: const Icon(Icons.lock_outlined),
@@ -206,6 +213,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       return null;
                     },
                   ),
+                  if (authState.error != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      authState.error!,
+                      style: const TextStyle(
+                        color: AppColors.error,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
 
                   // Forgot password link
@@ -247,6 +264,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         child: const Text('Sign Up'),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'More resources and account tools on basidekick.com',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: _openWebsite,
+                    icon: const Icon(Icons.open_in_new, size: 16),
+                    label: const Text('Visit basidekick.com'),
                   ),
                 ],
               ),

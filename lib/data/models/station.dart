@@ -18,7 +18,7 @@ class Station with _$Station {
 
   const factory Station({
     required String id,
-    @JsonKey(name: 'organization_id') required String organizationId,
+    @JsonKey(name: 'organization_id') String? organizationId,
     required String name,
     required String host,
     @Default(443) int port,

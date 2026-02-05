@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 
@@ -206,6 +207,17 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     }
   }
 
+  Future<void> _openWebsite() async {
+    final uri = Uri.parse('https://www.basidekick.com');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open basidekick.com')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
@@ -322,6 +334,29 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                   onTap: _showChangePasswordDialog,
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Resources section
+          const Text(
+            '[ RESOURCES ]',
+            style: TextStyle(
+              fontFamily: 'JetBrains Mono',
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.open_in_new),
+              title: const Text('Visit basidekick.com'),
+              subtitle: const Text('Guides, billing, and account tools'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: _openWebsite,
             ),
           ),
           const SizedBox(height: 24),
