@@ -1,9 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+void _log(String message) {
+  if (kDebugMode) {
+    debugPrint('NiagaraClient: $message');
+  }
+}
 import '../models/station.dart';
 import '../models/equipment_config.dart';
 
@@ -129,7 +136,7 @@ class NiagaraClient {
 
       for (final formatParam in formatOptions) {
         final testUrl = '${station.baseUrl}/ord?$bqlQuery$formatParam';
-        print('NiagaraClient: Trying URL: $testUrl');
+        _log('Trying URL: $testUrl');
 
         try {
           final response = await client.get(
@@ -143,7 +150,7 @@ class NiagaraClient {
           lastResponse = response;
 
           if (response.statusCode != 200) {
-            print('NiagaraClient: Status ${response.statusCode}');
+            _log('Status ${response.statusCode}');
             continue;
           }
 
@@ -151,29 +158,29 @@ class NiagaraClient {
 
           // Check if we got CSV (not HTML)
           if (!data.contains('<!DOCTYPE') && !data.contains('<html')) {
-            print('NiagaraClient: Got direct CSV with format: $formatParam');
+            _log('Got direct CSV with format: $formatParam');
             csvContent = data;
             break;
           }
 
           // If this is the fallback (empty string), try parsing HTML
           if (formatParam == '') {
-            print('NiagaraClient: Got HTML, trying to extract data from iframe...');
+            _log('Got HTML, trying to extract data from iframe...');
             csvContent = await _fetchIframeContent(data, station.baseUrl, basicAuth, client);
             if (csvContent != null) {
-              print('NiagaraClient: Extracted CSV from iframe');
+              _log('Extracted CSV from iframe');
               break;
             }
           }
         } catch (e) {
-          print('NiagaraClient: Format $formatParam failed: $e');
+          _log('Format $formatParam failed: $e');
         }
       }
 
       if (csvContent != null) {
-        print('NiagaraClient: CSV lines: ${csvContent.split('\n').length}');
+        _log('CSV lines: ${csvContent.split('\n').length}');
         final tree = _parseStationTree(csvContent);
-        print('NiagaraClient: Parsed ${tree.equipment.length} equipment');
+        _log('Parsed ${tree.equipment.length} equipment');
         return NiagaraTreeResult.success(tree);
       }
 
@@ -186,20 +193,13 @@ class NiagaraClient {
       if (response.statusCode == 200) {
         // Debug: log response format
         final body = response.body;
-        print('NiagaraClient: Response length=${body.length}');
-        // Print more of the body to understand structure
-        if (body.length > 500) {
-          print('NiagaraClient: Body start: ${body.substring(0, 500)}');
-          print('NiagaraClient: Body middle: ${body.substring(body.length ~/ 2, (body.length ~/ 2) + 500 > body.length ? body.length : (body.length ~/ 2) + 500)}');
-        } else {
-          print('NiagaraClient: Full body: $body');
-        }
+        _log('Response length=${body.length}');
 
         final csvContent = _extractCsvContent(body, station.baseUrl, basicAuth, client);
         if (csvContent != null) {
-          print('NiagaraClient: CSV parsed, lines=${csvContent.split('\n').length}');
+          _log('CSV parsed, lines=${csvContent.split('\n').length}');
           final tree = _parseStationTree(csvContent);
-          print('NiagaraClient: Tree parsed, equipment count=${tree.equipment.length}');
+          _log('Tree parsed, equipment count=${tree.equipment.length}');
           return NiagaraTreeResult.success(tree);
         }
         // Provide more info about what we received
@@ -232,7 +232,7 @@ class NiagaraClient {
 
       if (iframeMatch != null) {
         var iframeUrl = iframeMatch.group(1)!;
-        print('NiagaraClient: Found iframe src: $iframeUrl');
+        _log('Found iframe src: $iframeUrl');
 
         // Decode HTML entities first
         iframeUrl = iframeUrl
@@ -250,7 +250,7 @@ class NiagaraClient {
 
         // URL decode
         iframeUrl = Uri.decodeFull(iframeUrl);
-        print('NiagaraClient: Fetching iframe: $iframeUrl');
+        _log('Fetching iframe: $iframeUrl');
 
         final iframeResponse = await client.get(
           Uri.parse(iframeUrl),
@@ -262,7 +262,7 @@ class NiagaraClient {
 
         if (iframeResponse.statusCode == 200) {
           final iframeHtml = iframeResponse.body;
-          print('NiagaraClient: Iframe response length: ${iframeHtml.length}');
+          _log('Iframe response length: ${iframeHtml.length}');
 
           // Parse table from iframe content
           final csv = _parseHtmlTableToCsv(iframeHtml);
@@ -271,14 +271,14 @@ class NiagaraClient {
           }
         }
       } else {
-        print('NiagaraClient: No servletViewWidget iframe found');
+        _log('No servletViewWidget iframe found');
       }
 
       // Fallback: try to find any table in the main HTML
       final csv = _parseHtmlTableToCsv(html);
       return csv;
     } catch (e) {
-      print('NiagaraClient: Error fetching iframe: $e');
+      _log('Error fetching iframe: $e');
       return null;
     }
   }
@@ -309,11 +309,11 @@ class NiagaraClient {
       }
 
       if (pointPaths.isEmpty) {
-        print('NiagaraClient: No points found in oBIX response');
+        _log('No points found in oBIX response');
         return null;
       }
 
-      print('NiagaraClient: Found ${pointPaths.length} paths in oBIX');
+      _log('Found ${pointPaths.length} paths in oBIX');
 
       // Group points by parent equipment
       final equipmentMap = <String, NiagaraEquipment>{};
@@ -349,7 +349,7 @@ class NiagaraClient {
 
       return StationTree(equipment: equipmentList, root: root);
     } catch (e) {
-      print('NiagaraClient: Error parsing oBIX: $e');
+      _log('Error parsing oBIX: $e');
       return null;
     }
   }
@@ -368,18 +368,18 @@ class NiagaraClient {
   /// Parse HTML table to CSV format
   String? _parseHtmlTableToCsv(String html) {
     try {
-      print('NiagaraClient: Parsing HTML table...');
+      _log('Parsing HTML table...');
 
       // Simple regex-based table extraction
       final tableMatch = RegExp(r'<table[^>]*>(.*?)</table>', dotAll: true, caseSensitive: false).firstMatch(html);
       if (tableMatch == null) {
-        print('NiagaraClient: No table found in HTML');
+        _log('No table found in HTML');
         // Try to find if there's a different structure
         if (html.contains('<pre>')) {
           // Some Niagara versions return CSV in <pre> tags
           final preMatch = RegExp(r'<pre[^>]*>(.*?)</pre>', dotAll: true).firstMatch(html);
           if (preMatch != null) {
-            print('NiagaraClient: Found content in <pre> tags');
+            _log('Found content in <pre> tags');
             return preMatch.group(1)?.trim();
           }
         }
@@ -414,10 +414,10 @@ class NiagaraClient {
         }
       }
 
-      print('NiagaraClient: Extracted ${csvLines.length} rows from HTML table');
+      _log('Extracted ${csvLines.length} rows from HTML table');
       return csvLines.isNotEmpty ? csvLines.join('\n') : null;
     } catch (e) {
-      print('NiagaraClient: Error parsing HTML table: $e');
+      _log('Error parsing HTML table: $e');
       return null;
     }
   }
@@ -648,7 +648,7 @@ class NiagaraClient {
       final uri = Uri.parse('${station.baseUrl}/ord?$bqlQuery');
       final basicAuth = base64Encode(utf8.encode('${creds.username}:${creds.password}'));
 
-      print('NiagaraClient: Fetching snapshot for: $equipmentPath');
+      _log('Fetching snapshot for: $equipmentPath');
 
       final response = await client.get(
         uri,
@@ -664,7 +664,7 @@ class NiagaraClient {
 
         // Check if response is HTML with iframe (like tree fetch)
         if (data.contains('<!DOCTYPE') || data.contains('<html')) {
-          print('NiagaraClient: Got HTML response, checking for iframe...');
+          _log('Got HTML response, checking for iframe...');
           csvContent = await _fetchIframeContent(data, station.baseUrl, basicAuth, client);
         } else {
           csvContent = data;
@@ -672,7 +672,7 @@ class NiagaraClient {
 
         if (csvContent != null && csvContent.isNotEmpty) {
           final snapshot = _parseSnapshot(csvContent);
-          print('NiagaraClient: Parsed ${snapshot.length} point values');
+          _log('Parsed ${snapshot.length} point values');
           return NiagaraSnapshotResult.success(snapshot);
         }
         return NiagaraSnapshotResult.error('Could not parse snapshot response');
@@ -698,14 +698,14 @@ class NiagaraClient {
     if (lines.isEmpty) return [];
 
     final header = _parseCsvLine(lines[0]);
-    print('NiagaraClient: Snapshot header: $header');
+    _log('Snapshot header: $header');
 
     final pathIndex = header.indexWhere((col) =>
         col.toLowerCase().contains('slot') || col.toLowerCase().contains('path') || col.toLowerCase().contains('object'));
     final valueIndex = header.indexWhere((col) => col.toLowerCase().contains('value'));
     final statusIndex = header.indexWhere((col) => col.toLowerCase().contains('status'));
 
-    print('NiagaraClient: Column indices - path:$pathIndex, value:$valueIndex, status:$statusIndex');
+    _log('Column indices - path:$pathIndex, value:$valueIndex, status:$statusIndex');
 
     if (pathIndex == -1) return [];
 
@@ -713,11 +713,6 @@ class NiagaraClient {
     for (int i = 1; i < lines.length; i++) {
       final cols = _parseCsvLine(lines[i]);
       if (cols.length <= pathIndex) continue;
-
-      // Debug first row
-      if (i == 1) {
-        print('NiagaraClient: First data row: $cols');
-      }
 
       var path = cols[pathIndex].trim().replaceFirst('slot:', '');
       final name = path.split('/').last;
