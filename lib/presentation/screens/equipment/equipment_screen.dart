@@ -401,6 +401,10 @@ class _EquipmentScreenState extends ConsumerState<EquipmentScreen> {
                           password: passwordController.text,
                         );
 
+                        // Invalidate cached credential providers so they re-read from storage
+                        ref.invalidate(stationCredentialStatusProvider(_station!.id));
+                        ref.invalidate(stationCredentialsProvider(_station!.id));
+
                         if (mounted) {
                           Navigator.pop(context);
                           setState(() {

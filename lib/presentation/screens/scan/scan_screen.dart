@@ -147,6 +147,33 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
           MobileScanner(
             controller: _controller,
             onDetect: _onDetect,
+            errorBuilder: (context, error, child) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.videocam_off, size: 64, color: AppColors.textTertiary),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Camera unavailable',
+                      style: TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Use the settings menu to navigate',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
 
           // Scan overlay

@@ -1,7 +1,7 @@
 name: qr_sidekick
 description: "QR Sidekick - HVAC technician tool for Niagara equipment data via QR codes"
 publish_to: 'none'
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.10.1
@@ -71,5 +71,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # assets:
-  #   - .env  # Add .env to assets locally for development; do not commit real credentials
+  assets:
+    - .env  # Add .env to assets locally for development; do not commit real credentials

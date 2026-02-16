@@ -5,14 +5,14 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../models/station.dart';
+import '../models/equipment_config.dart';
 
 void _log(String message) {
   if (kDebugMode) {
     debugPrint('NiagaraClient: $message');
   }
 }
-import '../models/station.dart';
-import '../models/equipment_config.dart';
 
 /// Client for communicating with Niagara 4 stations
 /// Based on proven patterns from niagara-sidekick
