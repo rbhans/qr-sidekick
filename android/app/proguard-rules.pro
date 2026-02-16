@@ -24,3 +24,6 @@
 # Keep Kotlin metadata
 -keep class kotlin.Metadata { *; }
 -dontwarn kotlin.**
+
+# Google Play Core (deferred components)
+-dontwarn com.google.android.play.core.**

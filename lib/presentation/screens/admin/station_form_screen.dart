@@ -164,6 +164,10 @@ class _StationFormScreenState extends ConsumerState<StationFormScreen> {
           username: _usernameController.text,
           password: _passwordController.text,
         );
+
+        // Invalidate cached credential providers so they re-read from storage
+        ref.invalidate(stationCredentialStatusProvider(stationId));
+        ref.invalidate(stationCredentialsProvider(stationId));
       }
 
       if (mounted) {
