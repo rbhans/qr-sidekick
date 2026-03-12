@@ -1,56 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
-import '../../data/services/subscription_service.dart';
 import '../providers/subscription_provider.dart';
 
-/// Dialog shown when user hits their equipment limit
-class UpgradeDialog extends ConsumerWidget {
-  final int currentCount;
-  final String? message;
+/// Dialog shown when user needs to purchase a station slot
+class StationPurchaseDialog extends ConsumerWidget {
+  const StationPurchaseDialog({super.key});
 
-  const UpgradeDialog({
-    super.key,
-    required this.currentCount,
-    this.message,
-  });
-
-  static Future<bool> show(
-    BuildContext context, {
-    required int currentCount,
-    String? message,
-  }) async {
+  static Future<bool> show(BuildContext context) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => UpgradeDialog(
-        currentCount: currentCount,
-        message: message,
-      ),
+      builder: (context) => const StationPurchaseDialog(),
     );
     return result ?? false;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final subscriptionState = ref.watch(subscriptionStateProvider);
-    final tier = subscriptionState.tier;
+    final purchaseState = ref.watch(stationPurchaseStateProvider);
+    final price = purchaseState.formattedPrice;
 
     return AlertDialog(
       backgroundColor: AppColors.surface,
-      title: Row(
+      title: const Row(
         children: [
-          const Icon(Icons.lock_outline, color: AppColors.warning),
-          const SizedBox(width: 12),
-          const Text('Equipment Limit Reached'),
+          Icon(Icons.dns, color: AppColors.primary),
+          SizedBox(width: 12),
+          Text('Station Slot Required'),
         ],
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            message ?? 'You\'ve reached the limit of ${tier.equipmentLimit} equipment items on the ${tier.displayName} plan.',
-            style: const TextStyle(color: AppColors.textSecondary),
+          const Text(
+            'Purchase a station slot to add a new Niagara station.',
+            style: TextStyle(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 16),
           Container(
@@ -60,28 +45,67 @@ class UpgradeDialog extends ConsumerWidget {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                const Text(
-                  'Upgrade to get more:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                const Icon(Icons.dns, size: 20, color: AppColors.primary),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Station Slot',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      Text(
+                        'One-time purchase per station',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                if (tier == SubscriptionTier.free) ...[
-                  _buildTierOption('Basic', '50 equipment', '\$3/mo'),
-                  _buildTierOption('Pro', '100 equipment', '\$5/mo'),
-                  _buildTierOption('Unlimited', 'No limits', '\$10/mo'),
-                ] else if (tier == SubscriptionTier.basic) ...[
-                  _buildTierOption('Pro', '100 equipment', '\$5/mo'),
-                  _buildTierOption('Unlimited', 'No limits', '\$10/mo'),
-                ] else if (tier == SubscriptionTier.pro) ...[
-                  _buildTierOption('Unlimited', 'No limits', '\$10/mo'),
-                ],
+                if (price != null)
+                  Text(
+                    price,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
               ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton(
+              onPressed: () async {
+                final count = await ref
+                    .read(stationPurchaseStateProvider.notifier)
+                    .restorePurchases();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(count > 0
+                          ? 'Restored $count station slot${count > 1 ? 's' : ''}'
+                          : 'No purchases to restore'),
+                    ),
+                  );
+                  if (count > 0) {
+                    Navigator.pop(context, true);
+                  }
+                }
+              },
+              child: const Text(
+                'Restore Purchases',
+                style: TextStyle(fontSize: 12),
+              ),
             ),
           ),
         ],
@@ -89,45 +113,19 @@ class UpgradeDialog extends ConsumerWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Maybe Later'),
+          child: const Text('Cancel'),
         ),
         ElevatedButton(
           onPressed: () async {
-            final notifier = ref.read(subscriptionStateProvider.notifier);
-            final success = await notifier.showPaywall();
+            final notifier = ref.read(stationPurchaseStateProvider.notifier);
+            final success = await notifier.purchaseStationSlot();
             if (context.mounted) {
               Navigator.pop(context, success);
             }
           },
-          child: const Text('View Plans'),
+          child: Text(price != null ? 'Purchase for $price' : 'Purchase'),
         ),
       ],
-    );
-  }
-
-  Widget _buildTierOption(String name, String limit, String price) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          const Icon(Icons.check, size: 16, color: AppColors.success),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '$name - $limit',
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-          Text(
-            price,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

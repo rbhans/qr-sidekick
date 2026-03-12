@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/station.dart';
 import '../../../data/services/niagara_client.dart';
+import '../../providers/equipment_config_provider.dart';
 import '../../providers/station_provider.dart';
 import '../../providers/niagara_provider.dart';
 
@@ -506,10 +507,12 @@ class _StationFormScreenState extends ConsumerState<StationFormScreen> {
                 final client = ref.read(niagaraClientProvider);
                 await client.deleteCredentials(widget.stationId!);
 
-                // Delete station
+                // Delete station (cascade deletes equipment configs)
                 await ref
                     .read(stationNotifierProvider.notifier)
                     .deleteStation(widget.stationId!);
+                // Refresh equipment configs since cascade delete removed them
+                ref.invalidate(equipmentConfigNotifierProvider);
                 if (mounted) {
                   context.pop();
                   ScaffoldMessenger.of(context).showSnackBar(

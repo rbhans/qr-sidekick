@@ -3,10 +3,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../providers/station_provider.dart';
+import '../../providers/subscription_provider.dart';
+import '../../widgets/upgrade_dialog.dart';
 
 /// Stations management screen
 class StationsScreen extends ConsumerWidget {
   const StationsScreen({super.key});
+
+  Future<void> _handleAddStation(BuildContext context, WidgetRef ref) async {
+    final stationCount = ref.read(stationCountProvider);
+    final canAdd = ref.read(canAddStationProvider(stationCount));
+
+    if (!canAdd) {
+      final purchased = await StationPurchaseDialog.show(context);
+      if (!purchased) return;
+      // Re-check after potential purchase
+      final newCanAdd = ref.read(canAddStationProvider(ref.read(stationCountProvider)));
+      if (!newCanAdd) return;
+    }
+
+    if (context.mounted) {
+      context.push('/admin/stations/add');
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -90,7 +109,7 @@ class StationsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
-                    onPressed: () => context.push('/admin/stations/add'),
+                    onPressed: () => _handleAddStation(context, ref),
                     icon: const Icon(Icons.add),
                     label: const Text('Add Station'),
                   ),
@@ -181,7 +200,7 @@ class StationsScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/admin/stations/add'),
+        onPressed: () => _handleAddStation(context, ref),
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: AppColors.background),
       ),

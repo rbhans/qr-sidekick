@@ -59,11 +59,11 @@ class Auth extends _$Auth {
         final profile = await _fetchProfile(user.id);
         state = AppAuthState(user: user, profile: profile);
         unawaited(
-          ref.read(subscriptionStateProvider.notifier).identifyUser(user.id),
+          ref.read(stationPurchaseStateProvider.notifier).identifyUser(user.id),
         );
       } else {
         state = const AppAuthState();
-        unawaited(ref.read(subscriptionStateProvider.notifier).logOut());
+        unawaited(ref.read(stationPurchaseStateProvider.notifier).logOut());
       }
     });
 
@@ -79,7 +79,7 @@ class Auth extends _$Auth {
         state = AppAuthState(user: currentUser, profile: profile);
       });
       unawaited(
-        ref.read(subscriptionStateProvider.notifier).identifyUser(currentUser.id),
+        ref.read(stationPurchaseStateProvider.notifier).identifyUser(currentUser.id),
       );
       return AppAuthState(user: currentUser, isLoading: true);
     }

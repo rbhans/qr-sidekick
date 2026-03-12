@@ -6,9 +6,7 @@ import '../../../data/models/station.dart';
 import '../../providers/equipment_config_provider.dart';
 import '../../providers/station_provider.dart';
 import '../../providers/niagara_provider.dart';
-import '../../providers/subscription_provider.dart';
 import '../../widgets/equipment_tree_browser.dart';
-import '../../widgets/upgrade_dialog.dart';
 
 /// Add/Edit equipment config screen
 class EquipmentFormScreen extends ConsumerStatefulWidget {
@@ -53,20 +51,6 @@ class _EquipmentFormScreenState extends ConsumerState<EquipmentFormScreen> {
         ),
       );
       return;
-    }
-
-    // Check subscription limit before creating new equipment
-    if (!widget.isEditing) {
-      final currentCount = ref.read(equipmentCountProvider);
-      final canAdd = ref.read(canAddEquipmentProvider(currentCount));
-
-      if (!canAdd) {
-        final upgraded = await UpgradeDialog.show(context, currentCount: currentCount);
-        if (!upgraded) return;
-        // Re-check after potential upgrade
-        final newCanAdd = ref.read(canAddEquipmentProvider(currentCount));
-        if (!newCanAdd) return;
-      }
     }
 
     setState(() => _isLoading = true);

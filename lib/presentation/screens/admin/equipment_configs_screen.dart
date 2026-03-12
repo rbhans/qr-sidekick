@@ -3,35 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/station.dart';
-import '../../../data/services/subscription_service.dart';
 import '../../providers/equipment_config_provider.dart';
 import '../../providers/station_provider.dart';
-import '../../providers/subscription_provider.dart';
 import '../../providers/niagara_provider.dart';
 import '../../widgets/equipment_tree_browser.dart';
-import '../../widgets/upgrade_dialog.dart';
 
 /// Equipment configs management screen
 class EquipmentConfigsScreen extends ConsumerWidget {
   const EquipmentConfigsScreen({super.key});
-
-  Future<void> _handleAddEquipment(BuildContext context, WidgetRef ref) async {
-    final currentCount = ref.read(equipmentCountProvider);
-    final canAdd = ref.read(canAddEquipmentProvider(currentCount));
-
-    if (!canAdd) {
-      // Show upgrade dialog
-      final upgraded = await UpgradeDialog.show(context, currentCount: currentCount);
-      if (!upgraded) return;
-      // Re-check after potential upgrade
-      final newCanAdd = ref.read(canAddEquipmentProvider(currentCount));
-      if (!newCanAdd) return;
-    }
-
-    if (context.mounted) {
-      context.push('/admin/equipment/add');
-    }
-  }
 
   Future<void> _handleBulkAdd(BuildContext context, WidgetRef ref) async {
     // First, select a station
@@ -87,21 +66,6 @@ class EquipmentConfigsScreen extends ConsumerWidget {
     );
 
     if (selection == null || selection.selections.isEmpty || !context.mounted) return;
-
-    // Check subscription limits
-    final currentCount = ref.read(equipmentCountProvider);
-    final subscriptionState = ref.read(subscriptionStateProvider);
-    final limit = subscriptionState.tier.equipmentLimit;
-    final newTotal = currentCount + selection.selections.length;
-
-    if (limit != -1 && newTotal > limit) {
-      final upgraded = await UpgradeDialog.show(
-        context,
-        currentCount: currentCount,
-        message: 'Adding ${selection.selections.length} equipment would exceed your limit of $limit.',
-      );
-      if (!upgraded || !context.mounted) return;
-    }
 
     // Show progress dialog and create configs
     if (context.mounted) {
@@ -171,9 +135,6 @@ class EquipmentConfigsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final configsAsync = ref.watch(equipmentConfigNotifierProvider);
-    final currentCount = ref.watch(equipmentCountProvider);
-    final subscriptionState = ref.watch(subscriptionStateProvider);
-    final limit = subscriptionState.tier.equipmentLimit;
 
     return Scaffold(
       appBar: AppBar(
@@ -187,31 +148,14 @@ class EquipmentConfigsScreen extends ConsumerWidget {
             }
           },
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '[ EQUIPMENT ]',
-              style: TextStyle(
-                fontFamily: 'JetBrains Mono',
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 1,
-              ),
-            ),
-            Text(
-              limit == -1
-                  ? '$currentCount items (Unlimited)'
-                  : '$currentCount / $limit items',
-              style: TextStyle(
-                fontFamily: 'JetBrains Mono',
-                fontSize: 11,
-                color: currentCount >= limit && limit != -1
-                    ? AppColors.warning
-                    : AppColors.textSecondary,
-              ),
-            ),
-          ],
+        title: const Text(
+          '[ EQUIPMENT ]',
+          style: TextStyle(
+            fontFamily: 'JetBrains Mono',
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 1,
+          ),
         ),
         actions: [
           IconButton(
@@ -275,7 +219,7 @@ class EquipmentConfigsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
-                    onPressed: () => _handleAddEquipment(context, ref),
+                    onPressed: () => context.push('/admin/equipment/add'),
                     icon: const Icon(Icons.add),
                     label: const Text('Add Equipment'),
                   ),
@@ -354,7 +298,7 @@ class EquipmentConfigsScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _handleAddEquipment(context, ref),
+        onPressed: () => context.push('/admin/equipment/add'),
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: AppColors.background),
       ),

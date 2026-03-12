@@ -83,3 +83,12 @@ final stationNotifierProvider =
   final repository = ref.watch(stationRepositoryProvider);
   return StationNotifier(repository, ref);
 });
+
+/// Station count provider for purchase limit checking
+final stationCountProvider = Provider<int>((ref) {
+  final stationsAsync = ref.watch(stationNotifierProvider);
+  return stationsAsync.maybeWhen(
+    data: (stations) => stations.length,
+    orElse: () => 0,
+  );
+});

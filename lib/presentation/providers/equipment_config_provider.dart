@@ -116,11 +116,3 @@ final equipmentConfigNotifierProvider =
   return EquipmentConfigNotifier(repository);
 });
 
-/// Equipment count provider for subscription limit checking
-final equipmentCountProvider = Provider<int>((ref) {
-  final configsAsync = ref.watch(equipmentConfigNotifierProvider);
-  return configsAsync.maybeWhen(
-    data: (configs) => configs.length,
-    orElse: () => 0,
-  );
-});
