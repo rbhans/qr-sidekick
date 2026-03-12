@@ -2,96 +2,36 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/env_config.dart';
 
 void _log(String message) {
   if (kDebugMode) {
-    debugPrint('SubscriptionService: $message');
+    debugPrint('StationPurchaseService: $message');
   }
 }
 
-/// Subscription tier based on equipment limits
-enum SubscriptionTier {
-  free,      // 1 equipment max
-  basic,     // 50 equipment, $3/mo
-  pro,       // 100 equipment, $5/mo
-  unlimited, // Unlimited, $10/mo
-}
+/// State representing how many station slots the user has purchased
+class StationPurchaseState {
+  final int purchasedSlots;
+  final Package? stationSlotPackage;
 
-/// Extension to get equipment limits for each tier
-extension SubscriptionTierLimits on SubscriptionTier {
-  int get equipmentLimit {
-    switch (this) {
-      case SubscriptionTier.free:
-        return 1;
-      case SubscriptionTier.basic:
-        return 50;
-      case SubscriptionTier.pro:
-        return 100;
-      case SubscriptionTier.unlimited:
-        return -1; // Unlimited
-    }
-  }
-
-  String get displayName {
-    switch (this) {
-      case SubscriptionTier.free:
-        return 'Free';
-      case SubscriptionTier.basic:
-        return 'Basic';
-      case SubscriptionTier.pro:
-        return 'Pro';
-      case SubscriptionTier.unlimited:
-        return 'Unlimited';
-    }
-  }
-
-  String get description {
-    switch (this) {
-      case SubscriptionTier.free:
-        return '1 equipment max';
-      case SubscriptionTier.basic:
-        return '50 equipment • \$3/mo';
-      case SubscriptionTier.pro:
-        return '100 equipment • \$5/mo';
-      case SubscriptionTier.unlimited:
-        return 'Unlimited • \$10/mo';
-    }
-  }
-}
-
-/// Subscription state
-class SubscriptionState {
-  final SubscriptionTier tier;
-  final bool isActive;
-  final String? expirationDateString;
-  final CustomerInfo? customerInfo;
-
-  const SubscriptionState({
-    this.tier = SubscriptionTier.free,
-    this.isActive = false,
-    this.expirationDateString,
-    this.customerInfo,
+  const StationPurchaseState({
+    this.purchasedSlots = 0,
+    this.stationSlotPackage,
   });
 
-  bool canAddEquipment(int currentCount) {
-    if (tier == SubscriptionTier.unlimited) return true;
-    return currentCount < tier.equipmentLimit;
+  bool canAddStation(int activeStationCount) {
+    return activeStationCount < purchasedSlots;
   }
 
-  int get remainingSlots {
-    if (tier == SubscriptionTier.unlimited) return -1;
-    return tier.equipmentLimit;
-  }
+  String? get formattedPrice => stationSlotPackage?.storeProduct.priceString;
 }
 
-/// Service for managing RevenueCat subscriptions
-class SubscriptionService {
-  // Entitlement IDs from RevenueCat dashboard
-  static const String _basicEntitlement = 'basic';
-  static const String _proEntitlement = 'pro';
-  static const String _unlimitedEntitlement = 'unlimited';
+/// Service for managing per-station purchases via RevenueCat
+class StationPurchaseService {
+  static const String _productId = 'station_slot';
+  static const String _offeringId = 'default';
 
   bool _isInitialized = false;
 
@@ -111,7 +51,6 @@ class SubscriptionService {
       await Purchases.configure(PurchasesConfiguration(apiKey));
       _isInitialized = true;
     } catch (e) {
-      // Avoid crashing the app if RevenueCat isn't configured correctly.
       _log('RevenueCat initialization failed: $e');
     }
   }
@@ -126,64 +65,133 @@ class SubscriptionService {
     return '';
   }
 
-  /// Get current subscription state
-  Future<SubscriptionState> getSubscriptionState() async {
+  /// Get current purchase state from Supabase profile
+  Future<StationPurchaseState> getState() async {
     try {
-      final customerInfo = await Purchases.getCustomerInfo();
-      return _parseCustomerInfo(customerInfo);
+      final client = Supabase.instance.client;
+      final userId = client.auth.currentUser?.id;
+      if (userId == null) return const StationPurchaseState();
+
+      final response = await client
+          .from('profiles')
+          .select('purchased_station_slots')
+          .eq('id', userId)
+          .maybeSingle();
+
+      final slots = (response?['purchased_station_slots'] as int?) ?? 0;
+
+      // Also fetch the package for price display
+      final package = await _getStationSlotPackage();
+
+      return StationPurchaseState(
+        purchasedSlots: slots,
+        stationSlotPackage: package,
+      );
     } catch (e) {
-      _log('Error getting subscription state: $e');
-      return const SubscriptionState();
+      _log('Error getting purchase state: $e');
+      return const StationPurchaseState();
     }
   }
 
-  /// Parse customer info to determine tier
-  SubscriptionState _parseCustomerInfo(CustomerInfo customerInfo) {
-    final entitlements = customerInfo.entitlements.active;
+  /// Get the station slot package from RevenueCat offerings
+  Future<Package?> _getStationSlotPackage() async {
+    try {
+      final offerings = await Purchases.getOfferings();
+      final offering = offerings.getOffering(_offeringId) ?? offerings.current;
+      if (offering == null) return null;
 
-    SubscriptionTier tier = SubscriptionTier.free;
-    String? expirationDateString;
-
-    // Check entitlements in order of highest tier
-    if (entitlements.containsKey(_unlimitedEntitlement)) {
-      tier = SubscriptionTier.unlimited;
-      expirationDateString = entitlements[_unlimitedEntitlement]?.expirationDate;
-    } else if (entitlements.containsKey(_proEntitlement)) {
-      tier = SubscriptionTier.pro;
-      expirationDateString = entitlements[_proEntitlement]?.expirationDate;
-    } else if (entitlements.containsKey(_basicEntitlement)) {
-      tier = SubscriptionTier.basic;
-      expirationDateString = entitlements[_basicEntitlement]?.expirationDate;
+      // Find the station_slot package
+      for (final package in offering.availablePackages) {
+        if (package.storeProduct.identifier == _productId) {
+          return package;
+        }
+      }
+      // Fallback: return the first available package
+      return offering.availablePackages.isNotEmpty
+          ? offering.availablePackages.first
+          : null;
+    } catch (e) {
+      _log('Error fetching offerings: $e');
+      return null;
     }
-
-    return SubscriptionState(
-      tier: tier,
-      isActive: tier != SubscriptionTier.free,
-      expirationDateString: expirationDateString,
-      customerInfo: customerInfo,
-    );
   }
 
-  /// Show the RevenueCat paywall
-  Future<bool> showPaywall() async {
+  /// Purchase a station slot. Returns true if purchase succeeded.
+  Future<bool> purchaseStationSlot() async {
     try {
-      final paywallResult = await RevenueCatUI.presentPaywallIfNeeded(_basicEntitlement);
-      return paywallResult == PaywallResult.purchased ||
-             paywallResult == PaywallResult.restored;
+      final package = await _getStationSlotPackage();
+      if (package == null) {
+        _log('No station_slot package found in offerings');
+        return false;
+      }
+
+      await Purchases.purchase(PurchaseParams.package(package));
+
+      // Increment purchased_station_slots in Supabase
+      await _incrementSlots();
+
+      return true;
+    } on PurchasesErrorCode catch (e) {
+      if (e == PurchasesErrorCode.purchaseCancelledError) {
+        _log('Purchase cancelled by user');
+      } else {
+        _log('Purchase error: $e');
+      }
+      return false;
     } catch (e) {
-      _log('Error showing paywall: $e');
+      _log('Error purchasing station slot: $e');
       return false;
     }
   }
 
-  /// Restore purchases
-  Future<SubscriptionState> restorePurchases() async {
+  /// Increment purchased_station_slots in Supabase
+  Future<void> _incrementSlots({int count = 1}) async {
+    try {
+      final client = Supabase.instance.client;
+      final userId = client.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // Use RPC or read-modify-write
+      final response = await client
+          .from('profiles')
+          .select('purchased_station_slots')
+          .eq('id', userId)
+          .single();
+
+      final currentSlots = (response['purchased_station_slots'] as int?) ?? 0;
+
+      await client.from('profiles').update({
+        'purchased_station_slots': currentSlots + count,
+      }).eq('id', userId);
+    } catch (e) {
+      _log('Error incrementing slots: $e');
+      rethrow;
+    }
+  }
+
+  /// Restore purchases and sync slot count from RevenueCat transaction history
+  Future<int> restorePurchases() async {
     try {
       final customerInfo = await Purchases.restorePurchases();
-      return _parseCustomerInfo(customerInfo);
+
+      // Count station_slot transactions
+      final slotCount = customerInfo.nonSubscriptionTransactions
+          .where((t) => t.productIdentifier == _productId)
+          .length;
+
+      // Sync to Supabase
+      final client = Supabase.instance.client;
+      final userId = client.auth.currentUser?.id;
+      if (userId != null && slotCount > 0) {
+        await client.from('profiles').update({
+          'purchased_station_slots': slotCount,
+        }).eq('id', userId);
+      }
+
+      return slotCount;
     } catch (e) {
       _log('Error restoring purchases: $e');
-      return const SubscriptionState();
+      return 0;
     }
   }
 

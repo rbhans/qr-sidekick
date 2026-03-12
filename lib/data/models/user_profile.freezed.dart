@@ -25,9 +25,8 @@ mixin _$UserProfile {
   @JsonKey(name: 'display_name')
   String? get displayName => throw _privateConstructorUsedError;
   String? get company => throw _privateConstructorUsedError;
-  @JsonKey(name: 'subscription_tier')
-  String get subscriptionTier => throw _privateConstructorUsedError;
-  Map<String, dynamic> get entitlements => throw _privateConstructorUsedError;
+  @JsonKey(name: 'purchased_station_slots')
+  int get purchasedStationSlots => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime? get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated_at')
@@ -54,8 +53,7 @@ abstract class $UserProfileCopyWith<$Res> {
     String id,
     @JsonKey(name: 'display_name') String? displayName,
     String? company,
-    @JsonKey(name: 'subscription_tier') String subscriptionTier,
-    Map<String, dynamic> entitlements,
+    @JsonKey(name: 'purchased_station_slots') int purchasedStationSlots,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
   });
@@ -79,8 +77,7 @@ class _$UserProfileCopyWithImpl<$Res, $Val extends UserProfile>
     Object? id = null,
     Object? displayName = freezed,
     Object? company = freezed,
-    Object? subscriptionTier = null,
-    Object? entitlements = null,
+    Object? purchasedStationSlots = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -98,14 +95,10 @@ class _$UserProfileCopyWithImpl<$Res, $Val extends UserProfile>
                 ? _value.company
                 : company // ignore: cast_nullable_to_non_nullable
                       as String?,
-            subscriptionTier: null == subscriptionTier
-                ? _value.subscriptionTier
-                : subscriptionTier // ignore: cast_nullable_to_non_nullable
-                      as String,
-            entitlements: null == entitlements
-                ? _value.entitlements
-                : entitlements // ignore: cast_nullable_to_non_nullable
-                      as Map<String, dynamic>,
+            purchasedStationSlots: null == purchasedStationSlots
+                ? _value.purchasedStationSlots
+                : purchasedStationSlots // ignore: cast_nullable_to_non_nullable
+                      as int,
             createdAt: freezed == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
@@ -133,8 +126,7 @@ abstract class _$$UserProfileImplCopyWith<$Res>
     String id,
     @JsonKey(name: 'display_name') String? displayName,
     String? company,
-    @JsonKey(name: 'subscription_tier') String subscriptionTier,
-    Map<String, dynamic> entitlements,
+    @JsonKey(name: 'purchased_station_slots') int purchasedStationSlots,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
   });
@@ -157,8 +149,7 @@ class __$$UserProfileImplCopyWithImpl<$Res>
     Object? id = null,
     Object? displayName = freezed,
     Object? company = freezed,
-    Object? subscriptionTier = null,
-    Object? entitlements = null,
+    Object? purchasedStationSlots = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -176,14 +167,10 @@ class __$$UserProfileImplCopyWithImpl<$Res>
             ? _value.company
             : company // ignore: cast_nullable_to_non_nullable
                   as String?,
-        subscriptionTier: null == subscriptionTier
-            ? _value.subscriptionTier
-            : subscriptionTier // ignore: cast_nullable_to_non_nullable
-                  as String,
-        entitlements: null == entitlements
-            ? _value._entitlements
-            : entitlements // ignore: cast_nullable_to_non_nullable
-                  as Map<String, dynamic>,
+        purchasedStationSlots: null == purchasedStationSlots
+            ? _value.purchasedStationSlots
+            : purchasedStationSlots // ignore: cast_nullable_to_non_nullable
+                  as int,
         createdAt: freezed == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -204,11 +191,10 @@ class _$UserProfileImpl implements _UserProfile {
     required this.id,
     @JsonKey(name: 'display_name') this.displayName,
     this.company,
-    @JsonKey(name: 'subscription_tier') this.subscriptionTier = 'free',
-    final Map<String, dynamic> entitlements = const {},
+    @JsonKey(name: 'purchased_station_slots') this.purchasedStationSlots = 0,
     @JsonKey(name: 'created_at') this.createdAt,
     @JsonKey(name: 'updated_at') this.updatedAt,
-  }) : _entitlements = entitlements;
+  });
 
   factory _$UserProfileImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserProfileImplFromJson(json);
@@ -221,17 +207,8 @@ class _$UserProfileImpl implements _UserProfile {
   @override
   final String? company;
   @override
-  @JsonKey(name: 'subscription_tier')
-  final String subscriptionTier;
-  final Map<String, dynamic> _entitlements;
-  @override
-  @JsonKey()
-  Map<String, dynamic> get entitlements {
-    if (_entitlements is EqualUnmodifiableMapView) return _entitlements;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(_entitlements);
-  }
-
+  @JsonKey(name: 'purchased_station_slots')
+  final int purchasedStationSlots;
   @override
   @JsonKey(name: 'created_at')
   final DateTime? createdAt;
@@ -241,7 +218,7 @@ class _$UserProfileImpl implements _UserProfile {
 
   @override
   String toString() {
-    return 'UserProfile(id: $id, displayName: $displayName, company: $company, subscriptionTier: $subscriptionTier, entitlements: $entitlements, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'UserProfile(id: $id, displayName: $displayName, company: $company, purchasedStationSlots: $purchasedStationSlots, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -253,12 +230,8 @@ class _$UserProfileImpl implements _UserProfile {
             (identical(other.displayName, displayName) ||
                 other.displayName == displayName) &&
             (identical(other.company, company) || other.company == company) &&
-            (identical(other.subscriptionTier, subscriptionTier) ||
-                other.subscriptionTier == subscriptionTier) &&
-            const DeepCollectionEquality().equals(
-              other._entitlements,
-              _entitlements,
-            ) &&
+            (identical(other.purchasedStationSlots, purchasedStationSlots) ||
+                other.purchasedStationSlots == purchasedStationSlots) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -272,8 +245,7 @@ class _$UserProfileImpl implements _UserProfile {
     id,
     displayName,
     company,
-    subscriptionTier,
-    const DeepCollectionEquality().hash(_entitlements),
+    purchasedStationSlots,
     createdAt,
     updatedAt,
   );
@@ -297,8 +269,7 @@ abstract class _UserProfile implements UserProfile {
     required final String id,
     @JsonKey(name: 'display_name') final String? displayName,
     final String? company,
-    @JsonKey(name: 'subscription_tier') final String subscriptionTier,
-    final Map<String, dynamic> entitlements,
+    @JsonKey(name: 'purchased_station_slots') final int purchasedStationSlots,
     @JsonKey(name: 'created_at') final DateTime? createdAt,
     @JsonKey(name: 'updated_at') final DateTime? updatedAt,
   }) = _$UserProfileImpl;
@@ -314,10 +285,8 @@ abstract class _UserProfile implements UserProfile {
   @override
   String? get company;
   @override
-  @JsonKey(name: 'subscription_tier')
-  String get subscriptionTier;
-  @override
-  Map<String, dynamic> get entitlements;
+  @JsonKey(name: 'purchased_station_slots')
+  int get purchasedStationSlots;
   @override
   @JsonKey(name: 'created_at')
   DateTime? get createdAt;

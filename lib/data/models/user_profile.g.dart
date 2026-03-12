@@ -11,8 +11,8 @@ _$UserProfileImpl _$$UserProfileImplFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       displayName: json['display_name'] as String?,
       company: json['company'] as String?,
-      subscriptionTier: json['subscription_tier'] as String? ?? 'free',
-      entitlements: json['entitlements'] as Map<String, dynamic>? ?? const {},
+      purchasedStationSlots:
+          (json['purchased_station_slots'] as num?)?.toInt() ?? 0,
       createdAt: json['created_at'] == null
           ? null
           : DateTime.parse(json['created_at'] as String),
@@ -26,8 +26,7 @@ Map<String, dynamic> _$$UserProfileImplToJson(_$UserProfileImpl instance) =>
       'id': instance.id,
       'display_name': instance.displayName,
       'company': instance.company,
-      'subscription_tier': instance.subscriptionTier,
-      'entitlements': instance.entitlements,
+      'purchased_station_slots': instance.purchasedStationSlots,
       'created_at': instance.createdAt?.toIso8601String(),
       'updated_at': instance.updatedAt?.toIso8601String(),
     };

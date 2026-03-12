@@ -86,8 +86,10 @@ class StationRepository {
     return Station.fromJson(response);
   }
 
-  /// Delete a station
+  /// Delete a station and all associated equipment configs.
+  /// The DB has ON DELETE CASCADE, but we explicitly delete configs first as a safety net.
   Future<void> deleteStation(String id) async {
+    await _client.from('qsk_equipment_configs').delete().eq('station_id', id);
     await _client.from('qsk_stations').delete().eq('id', id);
   }
 }

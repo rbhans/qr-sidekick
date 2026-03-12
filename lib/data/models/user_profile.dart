@@ -10,8 +10,7 @@ class UserProfile with _$UserProfile {
     required String id,
     @JsonKey(name: 'display_name') String? displayName,
     String? company,
-    @JsonKey(name: 'subscription_tier') @Default('free') String subscriptionTier,
-    @Default({}) Map<String, dynamic> entitlements,
+    @JsonKey(name: 'purchased_station_slots') @Default(0) int purchasedStationSlots,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
   }) = _UserProfile;

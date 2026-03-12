@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../data/services/subscription_service.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/station_provider.dart';
 import '../../providers/subscription_provider.dart';
 
 /// Admin dashboard screen - manage stations, equipment, and settings
@@ -105,9 +105,9 @@ class AdminScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            // Subscription section
+            // Station slots section
             const Text(
-              '[ SUBSCRIPTION ]',
+              '[ STATION SLOTS ]',
               style: TextStyle(
                 fontFamily: 'JetBrains Mono',
                 fontSize: 12,
@@ -117,7 +117,7 @@ class AdminScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            _SubscriptionCard(),
+            _StationSlotsCard(),
             const SizedBox(height: 24),
 
             // Management section
@@ -178,34 +178,13 @@ class AdminScreen extends ConsumerWidget {
   }
 }
 
-/// Subscription status card widget
-class _SubscriptionCard extends ConsumerWidget {
+/// Station slots status card widget
+class _StationSlotsCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final subscriptionState = ref.watch(subscriptionStateProvider);
-    final tier = subscriptionState.tier;
-
-    final Color tierColor;
-    final IconData tierIcon;
-
-    switch (tier) {
-      case SubscriptionTier.unlimited:
-        tierColor = AppColors.primary;
-        tierIcon = Icons.all_inclusive;
-        break;
-      case SubscriptionTier.pro:
-        tierColor = AppColors.secondary;
-        tierIcon = Icons.workspace_premium;
-        break;
-      case SubscriptionTier.basic:
-        tierColor = AppColors.info;
-        tierIcon = Icons.star;
-        break;
-      case SubscriptionTier.free:
-      default:
-        tierColor = AppColors.success;
-        tierIcon = Icons.card_giftcard;
-    }
+    final purchaseState = ref.watch(stationPurchaseStateProvider);
+    final stationCount = ref.watch(stationCountProvider);
+    final purchasedSlots = purchaseState.purchasedSlots;
 
     return Card(
       child: Padding(
@@ -217,11 +196,11 @@ class _SubscriptionCard extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: tierColor.withValues(alpha: 0.1),
+                    color: AppColors.secondary.withValues(alpha: 0.1),
                   ),
-                  child: Icon(
-                    tierIcon,
-                    color: tierColor,
+                  child: const Icon(
+                    Icons.dns,
+                    color: AppColors.secondary,
                     size: 24,
                   ),
                 ),
@@ -231,14 +210,17 @@ class _SubscriptionCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        tier.displayName,
+                        '$stationCount / $purchasedSlots stations',
                         style: const TextStyle(
+                          fontFamily: 'JetBrains Mono',
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                         ),
                       ),
                       Text(
-                        tier.description,
+                        purchasedSlots == 0
+                            ? 'Purchase a slot to add a station'
+                            : '$purchasedSlots slot${purchasedSlots > 1 ? 's' : ''} purchased',
                         style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13,
@@ -247,30 +229,30 @@ class _SubscriptionCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                if (tier == SubscriptionTier.free)
-                  ElevatedButton(
-                    onPressed: () async {
-                      await ref.read(subscriptionStateProvider.notifier).showPaywall();
-                    },
-                    child: const Text('Upgrade'),
-                  )
-                else
-                  TextButton(
-                    onPressed: () async {
-                      await ref.read(subscriptionStateProvider.notifier).showPaywall();
-                    },
-                    child: const Text('Manage'),
-                  ),
+                ElevatedButton(
+                  onPressed: () async {
+                    await ref
+                        .read(stationPurchaseStateProvider.notifier)
+                        .purchaseStationSlot();
+                  },
+                  child: const Text('Buy Slot'),
+                ),
               ],
             ),
             const SizedBox(height: 12),
             // Restore purchases link
             TextButton(
               onPressed: () async {
-                await ref.read(subscriptionStateProvider.notifier).restorePurchases();
+                final count = await ref
+                    .read(stationPurchaseStateProvider.notifier)
+                    .restorePurchases();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Purchases restored')),
+                    SnackBar(
+                      content: Text(count > 0
+                          ? 'Restored $count station slot${count > 1 ? 's' : ''}'
+                          : 'No purchases to restore'),
+                    ),
                   );
                 }
               },

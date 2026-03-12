@@ -7,7 +7,7 @@ QR Sidekick is a Flutter app for HVAC technicians to scan QR codes on Building A
 - **Framework**: Flutter/Dart (SDK ^3.10.1)
 - **State Management**: Riverpod with code generation
 - **Backend**: Supabase
-- **Subscriptions**: RevenueCat
+- **Purchases**: RevenueCat (per-station consumable IAP)
 - **Navigation**: GoRouter
 - **Models**: Freezed for immutable data classes
 - **QR Scanning**: mobile_scanner
@@ -26,7 +26,7 @@ lib/
 │   ├── datasources/      # Supabase data source
 │   ├── models/           # Freezed data models
 │   ├── repositories/     # Data repositories
-│   └── services/         # Niagara client, scan history, subscriptions
+│   └── services/         # Niagara client, scan history, station purchases
 └── presentation/
     ├── providers/        # Riverpod providers
     ├── screens/          # UI screens (auth, admin, equipment, scan)
@@ -103,6 +103,15 @@ All models use Freezed for immutability. Key models:
 - iOS: `com.basidekick.qrSidekick`
 - Android: `com.basidekick.qr_sidekick`
 
+## Monetization Model
+- **Per-station purchase**: Each station requires a one-time consumable IAP purchase via RevenueCat
+- **No free stations**: Every station requires purchase
+- **Slot freed on deletion**: Deleting a station frees the slot (cascade deletes all equipment/QR codes)
+- **Equipment unlimited**: No limits on equipment per station
+- Key files: `subscription_service.dart` (StationPurchaseService), `subscription_provider.dart` (stationPurchaseStateProvider)
+- Supabase `profiles.purchased_station_slots` tracks total slots purchased
+
 ## Supabase
 - Project URL: https://cwdoklplunlaqakiyagb.supabase.co
 - Tables: stations, equipment_configs, user_profiles, etc.
+- `qsk_equipment_configs.station_id` has ON DELETE CASCADE to `qsk_stations.id`

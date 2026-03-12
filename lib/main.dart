@@ -15,8 +15,8 @@ void main() async {
   await initializeSupabase();
 
   // Initialize RevenueCat
-  final subscriptionService = SubscriptionService();
-  await subscriptionService.initialize();
+  final stationPurchaseService = StationPurchaseService();
+  await stationPurchaseService.initialize();
 
   runApp(
     const ProviderScope(
