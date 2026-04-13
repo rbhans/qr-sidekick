@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"strconv"
 	"time"
@@ -18,13 +19,14 @@ type Server struct {
 }
 
 // NewServer creates a new Server and registers all routes.
-func NewServer(db *Database, connectors *ConnectorRegistry) *Server {
+// webFS is served as a fallback for non-API routes (static files).
+func NewServer(db *Database, connectors *ConnectorRegistry, webFS fs.FS) *Server {
 	s := &Server{
 		db:         db,
 		connectors: connectors,
 		mux:        http.NewServeMux(),
 	}
-	s.routes()
+	s.routes(webFS)
 	return s
 }
 
@@ -42,7 +44,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.mux.ServeHTTP(w, r)
 }
 
-func (s *Server) routes() {
+func (s *Server) routes(webFS fs.FS) {
 	// Public (tech-facing)
 	s.mux.HandleFunc("GET /api/equipment/{qrId}", s.handleGetLiveData)
 	s.mux.HandleFunc("GET /api/equipment/{qrId}/notes", s.handleGetNotes)
@@ -67,6 +69,9 @@ func (s *Server) routes() {
 
 	// Misc
 	s.mux.HandleFunc("GET /api/connectors", s.handleListConnectors)
+
+	// Static files (fallback for non-API routes)
+	s.mux.Handle("/", http.FileServer(http.FS(webFS)))
 }
 
 // ---------------------------------------------------------------------------

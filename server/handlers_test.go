@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/fstest"
 )
 
 func testServer(t *testing.T) *Server {
@@ -13,7 +14,7 @@ func testServer(t *testing.T) *Server {
 	db := testDB(t)
 	reg := NewConnectorRegistry()
 	reg.Register(&NiagaraConnector{})
-	return NewServer(db, reg)
+	return NewServer(db, reg, fstest.MapFS{})
 }
 
 func TestCreateAndListStations(t *testing.T) {
