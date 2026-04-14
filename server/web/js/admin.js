@@ -79,7 +79,6 @@ function renderStationList(container) {
         '<h3>' + escapeHtml(s.name) + '</h3>' +
         '<div class="flex flex-center gap-2 mt-1">' +
           '<small class="mono">' + escapeHtml(s.host) + ':' + escapeHtml(String(s.port)) + '</small>' +
-          (s.connectorType ? ' <span class="badge">' + escapeHtml(s.connectorType) + '</span>' : '') +
         '</div>' +
       '</div>';
     }).join('');
@@ -109,21 +108,11 @@ function renderStationForm(container, stationId) {
       '<div id="station-form-area"><div class="loading"><div class="spinner"></div></div></div>' +
     '</div>';
 
-  var connectorsPromise = API.get('/api/connectors');
   var stationPromise = isEdit ? API.get('/api/stations/' + stationId) : Promise.resolve(null);
 
-  Promise.all([connectorsPromise, stationPromise]).then(function(results) {
-    var connectors = results[0] || [];
-    var station = results[1];
+  stationPromise.then(function(station) {
     var area = document.getElementById('station-form-area');
     if (!area) return;
-
-    var connectorOptions = connectors.map(function(c) {
-      var id = c.id || c;
-      var name = c.name || c;
-      var selected = station && station.connectorType === id ? ' selected' : '';
-      return '<option value="' + escapeAttr(id) + '"' + selected + '>' + escapeHtml(name) + '</option>';
-    }).join('');
 
     area.innerHTML =
       '<form id="station-form">' +
@@ -153,10 +142,6 @@ function renderStationForm(container, stationId) {
               '<span>HTTP</span>' +
             '</label>' +
           '</div>' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="sf-connector">Connector Type</label>' +
-          '<select id="sf-connector">' + connectorOptions + '</select>' +
         '</div>' +
         '<div class="form-group">' +
           '<label for="sf-username">Username</label>' +
@@ -238,7 +223,7 @@ function buildStationBody() {
     host: document.getElementById('sf-host').value.trim(),
     port: parseInt(document.getElementById('sf-port').value, 10) || 443,
     protocol: document.querySelector('input[name="sf-protocol"]:checked').value,
-    connectorType: document.getElementById('sf-connector').value
+    connectorType: 'niagara'
   };
   var username = document.getElementById('sf-username').value.trim();
   var password = document.getElementById('sf-password').value;
