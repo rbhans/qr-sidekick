@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qr-sidekick-v1';
+const CACHE_NAME = 'qr-sidekick-v2';
 const SHELL_URLS = [
   '/',
   '/css/style.css',
@@ -24,15 +24,17 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Network-first for API calls
-  if (e.request.url.includes('/api/')) {
-    e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request))
-    );
-    return;
-  }
-  // Cache-first for app shell
+  // Network-first for everything; fall back to cache only if network fails.
+  // Keeps offline support while ensuring updates show up without manual cache busts.
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
+    fetch(e.request)
+      .then(res => {
+        if (res && res.ok && e.request.method === 'GET' && !e.request.url.includes('/api/')) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+        }
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
