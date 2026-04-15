@@ -246,3 +246,50 @@ func TestNotesCRUD(t *testing.T) {
 		t.Fatalf("expected %q, got %q", "Second note", notes[0].Content)
 	}
 }
+
+func TestUpdateStationPreservesCredentialsWhenBlank(t *testing.T) {
+	db := testDB(t)
+	id, err := db.CreateStation(Station{
+		Name: "S1", Host: "10.0.0.1", Port: 443,
+		Protocol: "https", ConnectorType: "niagara",
+		Username: "admin", Password: "secret",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Update without credentials (simulates admin form save with blank fields).
+	err = db.UpdateStation(id, Station{
+		Name: "S1-renamed", Host: "10.0.0.2", Port: 8443,
+		Protocol: "http", ConnectorType: "niagara",
+		// Username and Password intentionally blank
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := db.GetStation(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Name != "S1-renamed" || got.Host != "10.0.0.2" || got.Port != 8443 || got.Protocol != "http" {
+		t.Fatalf("core fields not updated: %+v", got)
+	}
+	if got.Username != "admin" || got.Password != "secret" {
+		t.Fatalf("credentials were overwritten: %+v", got)
+	}
+
+	// Explicit credential change should work.
+	err = db.UpdateStation(id, Station{
+		Name: "S1-renamed", Host: "10.0.0.2", Port: 8443,
+		Protocol: "http", ConnectorType: "niagara",
+		Username: "newuser", Password: "newpass",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _ = db.GetStation(id)
+	if got.Username != "newuser" || got.Password != "newpass" {
+		t.Fatalf("credentials did not update when explicit: %+v", got)
+	}
+}

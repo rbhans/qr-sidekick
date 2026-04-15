@@ -182,12 +182,28 @@ func (d *Database) ListStations() ([]Station, error) {
 
 // UpdateStation updates a station by ID.
 func (d *Database) UpdateStation(id int64, s Station) error {
+	// Update core fields always.
 	_, err := d.db.Exec(
-		`UPDATE stations SET name=?, host=?, port=?, protocol=?, connector_type=?, username=?, password=?
-		 WHERE id=?`,
-		s.Name, s.Host, s.Port, s.Protocol, s.ConnectorType, s.Username, s.Password, id,
+		`UPDATE stations SET name=?, host=?, port=?, protocol=?, connector_type=? WHERE id=?`,
+		s.Name, s.Host, s.Port, s.Protocol, s.ConnectorType, id,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	// Only overwrite credentials when the client explicitly sent them.
+	// Empty strings mean "leave existing credentials alone" (admin form sends
+	// blank fields when the operator is not changing the password).
+	if s.Username != "" {
+		if _, err := d.db.Exec("UPDATE stations SET username=? WHERE id=?", s.Username, id); err != nil {
+			return err
+		}
+	}
+	if s.Password != "" {
+		if _, err := d.db.Exec("UPDATE stations SET password=? WHERE id=?", s.Password, id); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // DeleteStation deletes a station by ID (cascades to equipment and notes).
