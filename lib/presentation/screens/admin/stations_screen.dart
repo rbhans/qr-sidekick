@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../providers/station_provider.dart';
-import '../../providers/subscription_provider.dart';
-import '../../widgets/upgrade_dialog.dart';
+import '../../providers/station_purchase_provider.dart';
+import '../../widgets/station_purchase_dialog.dart';
 
 /// Stations management screen
 class StationsScreen extends ConsumerWidget {

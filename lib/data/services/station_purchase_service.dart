@@ -15,10 +15,12 @@ void _log(String message) {
 class StationPurchaseState {
   final int purchasedSlots;
   final Package? stationSlotPackage;
+  final bool isLoading;
 
   const StationPurchaseState({
     this.purchasedSlots = 0,
     this.stationSlotPackage,
+    this.isLoading = true,
   });
 
   bool canAddStation(int activeStationCount) {
@@ -86,10 +88,11 @@ class StationPurchaseService {
       return StationPurchaseState(
         purchasedSlots: slots,
         stationSlotPackage: package,
+        isLoading: false,
       );
     } catch (e) {
       _log('Error getting purchase state: $e');
-      return const StationPurchaseState();
+      return const StationPurchaseState(isLoading: false);
     }
   }
 
@@ -179,10 +182,10 @@ class StationPurchaseService {
           .where((t) => t.productIdentifier == _productId)
           .length;
 
-      // Sync to Supabase
+      // Sync to Supabase (always update, including zero to clear stale counts)
       final client = Supabase.instance.client;
       final userId = client.auth.currentUser?.id;
-      if (userId != null && slotCount > 0) {
+      if (userId != null) {
         await client.from('profiles').update({
           'purchased_station_slots': slotCount,
         }).eq('id', userId);

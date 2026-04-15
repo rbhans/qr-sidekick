@@ -24,7 +24,7 @@ dependencies:
   go_router: ^14.8.1
 
   # QR Code
-  mobile_scanner: ^6.0.5
+  mobile_scanner: ^7.2.0
   qr_flutter: ^4.1.0
 
   # Storage

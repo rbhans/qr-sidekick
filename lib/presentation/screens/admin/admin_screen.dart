@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/station_provider.dart';
-import '../../providers/subscription_provider.dart';
+import '../../providers/station_purchase_provider.dart';
 
 /// Admin dashboard screen - manage stations, equipment, and settings
 class AdminScreen extends ConsumerWidget {
@@ -185,6 +185,7 @@ class _StationSlotsCard extends ConsumerWidget {
     final purchaseState = ref.watch(stationPurchaseStateProvider);
     final stationCount = ref.watch(stationCountProvider);
     final purchasedSlots = purchaseState.purchasedSlots;
+    final isLoading = purchaseState.isLoading;
 
     return Card(
       child: Padding(
@@ -206,31 +207,41 @@ class _StationSlotsCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '$stationCount / $purchasedSlots stations',
-                        style: const TextStyle(
+                  child: isLoading
+                    ? const Text(
+                        'Loading...',
+                        style: TextStyle(
                           fontFamily: 'JetBrains Mono',
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
-                        ),
-                      ),
-                      Text(
-                        purchasedSlots == 0
-                            ? 'Purchase a slot to add a station'
-                            : '$purchasedSlots slot${purchasedSlots > 1 ? 's' : ''} purchased',
-                        style: const TextStyle(
                           color: AppColors.textSecondary,
-                          fontSize: 13,
                         ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$stationCount / $purchasedSlots stations',
+                            style: const TextStyle(
+                              fontFamily: 'JetBrains Mono',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            purchasedSlots == 0
+                                ? 'Purchase a slot to add a station'
+                                : '$purchasedSlots slot${purchasedSlots > 1 ? 's' : ''} purchased',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
                 ),
                 ElevatedButton(
-                  onPressed: () async {
+                  onPressed: isLoading ? null : () async {
                     await ref
                         .read(stationPurchaseStateProvider.notifier)
                         .purchaseStationSlot();

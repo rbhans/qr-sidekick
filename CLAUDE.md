@@ -108,7 +108,7 @@ All models use Freezed for immutability. Key models:
 - **No free stations**: Every station requires purchase
 - **Slot freed on deletion**: Deleting a station frees the slot (cascade deletes all equipment/QR codes)
 - **Equipment unlimited**: No limits on equipment per station
-- Key files: `subscription_service.dart` (StationPurchaseService), `subscription_provider.dart` (stationPurchaseStateProvider)
+- Key files: `station_purchase_service.dart` (StationPurchaseService), `station_purchase_provider.dart` (stationPurchaseStateProvider)
 - Supabase `profiles.purchased_station_slots` tracks total slots purchased
 
 ## Supabase

@@ -283,76 +283,6 @@ class NiagaraClient {
     }
   }
 
-  /// Parse oBIX XML response to build station tree
-  StationTree? _parseObixResponse(String body) {
-    try {
-      // oBIX returns XML with obj elements
-      // Look for ref elements that represent points
-      final equipment = <NiagaraEquipment>[];
-      final pointPaths = <String>[];
-
-      // Simple XML parsing - look for href attributes
-      final hrefPattern = RegExp(r'href="([^"]+)"');
-      final hrefMatches = hrefPattern.allMatches(body);
-      for (final match in hrefMatches) {
-        final href = match.group(1)!;
-        if (href.contains('/points/') || href.endsWith('Point')) {
-          pointPaths.add(href);
-        }
-      }
-
-      // Also look for slot paths in the response
-      final slotPattern = RegExp(r'slot:/[^\s<>"]+');
-      final slotMatches = slotPattern.allMatches(body);
-      for (final match in slotMatches) {
-        pointPaths.add(match.group(0)!);
-      }
-
-      if (pointPaths.isEmpty) {
-        _log('No points found in oBIX response');
-        return null;
-      }
-
-      _log('Found ${pointPaths.length} paths in oBIX');
-
-      // Group points by parent equipment
-      final equipmentMap = <String, NiagaraEquipment>{};
-      for (final path in pointPaths) {
-        final segments = path.replaceFirst('slot:', '').split('/').where((s) => s.isNotEmpty).toList();
-        if (segments.isEmpty) continue;
-
-        final pointName = segments.removeLast();
-        if (segments.isNotEmpty && segments.last == 'points') {
-          segments.removeLast();
-        }
-        if (segments.isEmpty) continue;
-
-        final equipName = segments.last;
-        final equipPath = '/${segments.join('/')}';
-
-        if (!equipmentMap.containsKey(equipPath)) {
-          equipmentMap[equipPath] = NiagaraEquipment(
-            name: equipName,
-            path: equipPath,
-            points: [],
-          );
-        }
-        equipmentMap[equipPath]!.points.add(NiagaraPoint(
-          name: pointName,
-          path: path,
-          type: 'Unknown',
-        ));
-      }
-
-      final equipmentList = equipmentMap.values.toList();
-      final root = _buildTree(equipmentList);
-
-      return StationTree(equipment: equipmentList, root: root);
-    } catch (e) {
-      _log('Error parsing oBIX: $e');
-      return null;
-    }
-  }
 
   /// Extract CSV content from response (handles HTML table parsing if needed)
   String? _extractCsvContent(String body, String baseUrl, String authHeader, http.Client client) {
@@ -958,6 +888,7 @@ sealed class NiagaraPointResult {
 }
 
 class NiagaraPointSuccess extends NiagaraPointResult {
+  @override
   final PointValue point;
   const NiagaraPointSuccess(this.point);
 }

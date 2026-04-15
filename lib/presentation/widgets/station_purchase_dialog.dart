@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
-import '../providers/subscription_provider.dart';
+import '../providers/station_purchase_provider.dart';
 
 /// Dialog shown when user needs to purchase a station slot
 class StationPurchaseDialog extends ConsumerWidget {

@@ -23,9 +23,8 @@ final stationProvider = FutureProvider.family<Station?, String>((ref, id) async 
 /// Station management notifier
 class StationNotifier extends StateNotifier<AsyncValue<List<Station>>> {
   final StationRepository _repository;
-  final Ref _ref;
 
-  StationNotifier(this._repository, this._ref) : super(const AsyncValue.loading()) {
+  StationNotifier(this._repository) : super(const AsyncValue.loading()) {
     loadStations();
   }
 
@@ -81,7 +80,7 @@ class StationNotifier extends StateNotifier<AsyncValue<List<Station>>> {
 final stationNotifierProvider =
     StateNotifierProvider<StationNotifier, AsyncValue<List<Station>>>((ref) {
   final repository = ref.watch(stationRepositoryProvider);
-  return StationNotifier(repository, ref);
+  return StationNotifier(repository);
 });
 
 /// Station count provider for purchase limit checking

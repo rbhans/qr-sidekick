@@ -147,7 +147,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
           MobileScanner(
             controller: _controller,
             onDetect: _onDetect,
-            errorBuilder: (context, error, child) {
+            errorBuilder: (context, error) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,

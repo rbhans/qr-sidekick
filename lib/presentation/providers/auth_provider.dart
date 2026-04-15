@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/errors/app_exception.dart' as app_errors;
 import '../../data/datasources/supabase_datasource.dart';
 import '../../data/models/user_profile.dart';
-import 'subscription_provider.dart';
+import 'station_purchase_provider.dart';
 
 part 'auth_provider.g.dart';
 

@@ -360,7 +360,12 @@ func (s *Server) handleStationTree(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := connector.FetchTree(station.Host, station.Port, station.Protocol, station.Username, station.Password)
-	jsonResp(w, http.StatusOK, result)
+	if !result.OK {
+		jsonError(w, http.StatusBadGateway, result.Error)
+		return
+	}
+	// Return the root node directly — frontend iterates its children.
+	jsonResp(w, http.StatusOK, result.Root)
 }
 
 // ---------------------------------------------------------------------------

@@ -49,23 +49,24 @@ function openTreeBrowser(stationId, onSelect) {
   }
   document.addEventListener('keydown', onKeyDown);
 
-  // Fetch tree
-  API.get('/api/stations/' + stationId + '/tree').then(function(tree) {
+  // Fetch tree — server returns the root TreeNode; iterate its children.
+  API.get('/api/stations/' + stationId + '/tree').then(function(root) {
     var content = document.getElementById('tree-content');
     if (!content) return;
 
-    if (!tree || !tree.length) {
-      content.innerHTML = '<div class="empty-state"><p>No nodes found in station tree.</p></div>';
+    var children = (root && root.children) || [];
+    if (!children.length) {
+      content.innerHTML = '<div class="empty-state"><p>No equipment found under /Drivers on this station.</p></div>';
       return;
     }
 
     content.innerHTML = '';
-    renderTreeNodes(content, tree, 0, true, onSelect, closeModal);
+    renderTreeNodes(content, children, 0, true, onSelect, closeModal);
   }).catch(function(err) {
     var content = document.getElementById('tree-content');
     if (content) {
       content.innerHTML = '<div class="empty-state"><p class="text-error">Failed to load tree: ' +
-        escapeHtml(err.message) + '</p></div>';
+        escapeHtml(err.message || 'unknown error') + '</p></div>';
     }
   });
 }

@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/services/subscription_service.dart';
+import '../../data/services/station_purchase_service.dart';
 
 /// Provider for the station purchase service singleton
 final stationPurchaseServiceProvider = Provider<StationPurchaseService>((ref) {
@@ -60,7 +60,9 @@ class StationPurchaseStateNotifier extends StateNotifier<StationPurchaseState> {
 }
 
 /// Provider to check if user can add more stations
+/// Returns false while loading to prevent premature access
 final canAddStationProvider = Provider.family<bool, int>((ref, activeStationCount) {
   final purchaseState = ref.watch(stationPurchaseStateProvider);
+  if (purchaseState.isLoading) return false;
   return purchaseState.canAddStation(activeStationCount);
 });

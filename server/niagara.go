@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -62,7 +63,10 @@ func (n *NiagaraConnector) TestConnection(host string, port int, protocol, usern
 }
 
 func (n *NiagaraConnector) FetchTree(host string, port int, protocol, username, password string) TreeResult {
-	client := n.newClient(30 * time.Second)
+	// 15s per format is plenty for a healthy Niagara station. 7 formats * 15s
+	// is still too long if the station is unreachable, so we also bail out on
+	// network errors immediately rather than burning the full budget.
+	client := n.newClient(15 * time.Second)
 	baseURL := fmt.Sprintf("%s://%s:%d", protocol, host, port)
 
 	const bqlQuery = "station:|slot:/Drivers|bql:select%20slotPath,%20type%20as%20'Point%20Type',%20facets%20from%20control:ControlPoint"
@@ -79,8 +83,11 @@ func (n *NiagaraConnector) FetchTree(host string, port int, protocol, username, 
 
 	var csvContent string
 	var lastResp *http.Response
+	var lastNetErr error
 
-	for _, fmtParam := range formatOptions {
+	log.Printf("FetchTree: %s (trying %d formats)", baseURL, len(formatOptions))
+
+	for i, fmtParam := range formatOptions {
 		testURL := fmt.Sprintf("%s/ord?%s%s", baseURL, bqlQuery, fmtParam)
 
 		req, err := http.NewRequest("GET", testURL, nil)
@@ -90,18 +97,31 @@ func (n *NiagaraConnector) FetchTree(host string, port int, protocol, username, 
 		req.SetBasicAuth(username, password)
 		req.Header.Set("Accept", "text/csv, text/plain, application/xml, */*")
 
+		start := time.Now()
 		resp, err := client.Do(req)
+		elapsed := time.Since(start)
 		if err != nil {
-			continue
+			log.Printf("  format[%d] %q → network error after %s: %v", i, fmtParam, elapsed, err)
+			lastNetErr = err
+			// Network failure (timeout, connection refused, TLS issue). Retrying
+			// the same host with different query params will just hit the same
+			// failure again, so stop here.
+			break
 		}
 
 		body, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
+			log.Printf("  format[%d] %q → read error: %v", i, fmtParam, err)
 			continue
 		}
 
 		lastResp = resp
+		log.Printf("  format[%d] %q → HTTP %d in %s (%d bytes)", i, fmtParam, resp.StatusCode, elapsed, len(body))
+
+		if resp.StatusCode == 401 || resp.StatusCode == 403 {
+			return TreeResult{OK: false, Error: "authentication failed"}
+		}
 		if resp.StatusCode != 200 {
 			continue
 		}
@@ -122,6 +142,10 @@ func (n *NiagaraConnector) FetchTree(host string, port int, protocol, username, 
 				break
 			}
 		}
+	}
+
+	if lastNetErr != nil && csvContent == "" {
+		return TreeResult{OK: false, Error: fmt.Sprintf("cannot reach station: %v", lastNetErr)}
 	}
 
 	if csvContent != "" {
