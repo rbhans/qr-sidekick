@@ -7,8 +7,8 @@ import (
 func TestNiagaraConnectorInterface(t *testing.T) {
 	var c Connector = &NiagaraConnector{}
 
-	if c.TypeID() != "niagara4" {
-		t.Errorf("TypeID() = %q, want %q", c.TypeID(), "niagara4")
+	if c.TypeID() != "niagara" {
+		t.Errorf("TypeID() = %q, want %q", c.TypeID(), "niagara")
 	}
 	if c.DisplayName() != "Niagara 4" {
 		t.Errorf("DisplayName() = %q, want %q", c.DisplayName(), "Niagara 4")
@@ -169,7 +169,7 @@ func TestConnectorRegistry(t *testing.T) {
 	reg := NewConnectorRegistry()
 
 	// Get missing returns nil
-	if got := reg.Get("niagara4"); got != nil {
+	if got := reg.Get("niagara"); got != nil {
 		t.Errorf("Get before Register returned non-nil: %v", got)
 	}
 
@@ -178,12 +178,12 @@ func TestConnectorRegistry(t *testing.T) {
 	reg.Register(c)
 
 	// Get existing
-	got := reg.Get("niagara4")
+	got := reg.Get("niagara")
 	if got == nil {
 		t.Fatal("Get after Register returned nil")
 	}
-	if got.TypeID() != "niagara4" {
-		t.Errorf("Get returned connector with TypeID %q, want %q", got.TypeID(), "niagara4")
+	if got.TypeID() != "niagara" {
+		t.Errorf("Get returned connector with TypeID %q, want %q", got.TypeID(), "niagara")
 	}
 
 	// Get missing still nil
@@ -196,7 +196,7 @@ func TestConnectorRegistry(t *testing.T) {
 	if len(all) != 1 {
 		t.Fatalf("All() returned %d connectors, want 1", len(all))
 	}
-	if all[0].TypeID() != "niagara4" {
-		t.Errorf("All()[0].TypeID() = %q, want %q", all[0].TypeID(), "niagara4")
+	if all[0].TypeID() != "niagara" {
+		t.Errorf("All()[0].TypeID() = %q, want %q", all[0].TypeID(), "niagara")
 	}
 }

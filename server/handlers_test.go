@@ -26,7 +26,7 @@ func TestCreateAndListStations(t *testing.T) {
 		Host:          "10.0.0.1",
 		Port:          443,
 		Protocol:      "https",
-		ConnectorType: "niagara4",
+		ConnectorType: "niagara",
 		Username:      "admin",
 		Password:      "secret",
 	})
@@ -102,7 +102,7 @@ func TestNotesEndpoint(t *testing.T) {
 		Host:          "localhost",
 		Port:          443,
 		Protocol:      "https",
-		ConnectorType: "niagara4",
+		ConnectorType: "niagara",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -173,7 +173,7 @@ func TestQRCodeEndpoint(t *testing.T) {
 
 	// Create station + equipment.
 	stationID, err := srv.db.CreateStation(Station{
-		Name: "S1", Host: "localhost", Port: 443, Protocol: "https", ConnectorType: "niagara4",
+		Name: "S1", Host: "localhost", Port: 443, Protocol: "https", ConnectorType: "niagara",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -218,7 +218,7 @@ func TestListConnectors(t *testing.T) {
 	if len(connectors) != 1 {
 		t.Fatalf("expected 1 connector, got %d", len(connectors))
 	}
-	if connectors[0]["typeId"] != "niagara4" {
-		t.Fatalf("expected typeId 'niagara4', got %q", connectors[0]["typeId"])
+	if connectors[0]["typeId"] != "niagara" {
+		t.Fatalf("expected typeId 'niagara', got %q", connectors[0]["typeId"])
 	}
 }

@@ -14,7 +14,7 @@ import (
 type NiagaraConnector struct{}
 
 func (n *NiagaraConnector) DisplayName() string { return "Niagara 4" }
-func (n *NiagaraConnector) TypeID() string      { return "niagara4" }
+func (n *NiagaraConnector) TypeID() string      { return "niagara" }
 
 func (n *NiagaraConnector) newClient(timeout time.Duration) *http.Client {
 	return &http.Client{
