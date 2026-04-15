@@ -75,17 +75,44 @@ function renderStationList(container) {
     }
 
     listEl.innerHTML = stations.map(function(s) {
-      return '<div class="card" data-id="' + escapeAttr(s.id) + '" style="cursor:pointer">' +
-        '<h3>' + escapeHtml(s.name) + '</h3>' +
-        '<div class="flex flex-center gap-2 mt-1">' +
-          '<small class="mono">' + escapeHtml(s.host) + ':' + escapeHtml(String(s.port)) + '</small>' +
+      return '<div class="card station-card" data-id="' + escapeAttr(s.id) + '">' +
+        '<div class="flex flex-center" style="justify-content:space-between;gap:8px">' +
+          '<div style="flex:1;cursor:pointer" class="station-open">' +
+            '<h3>' + escapeHtml(s.name) + '</h3>' +
+            '<small class="mono">' + escapeHtml(s.host) + ':' + escapeHtml(String(s.port)) + '</small>' +
+          '</div>' +
+          '<button type="button" class="btn btn-sm btn-danger station-delete" title="Delete station">Delete</button>' +
         '</div>' +
       '</div>';
     }).join('');
 
-    listEl.querySelectorAll('.card').forEach(function(card) {
-      card.addEventListener('click', function() {
-        navigate('#/admin/stations/' + card.getAttribute('data-id'));
+    listEl.querySelectorAll('.station-open').forEach(function(el) {
+      el.addEventListener('click', function() {
+        var id = el.closest('.station-card').getAttribute('data-id');
+        navigate('#/admin/stations/' + id);
+      });
+    });
+
+    listEl.querySelectorAll('.station-delete').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var card = btn.closest('.station-card');
+        var id = card.getAttribute('data-id');
+        var name = card.querySelector('h3').textContent;
+        if (!confirm('Delete "' + name + '"? All equipment and QR codes linked to this station will also be deleted.')) return;
+        btn.disabled = true;
+        btn.textContent = 'Deleting...';
+        API.del('/api/stations/' + id).then(function() {
+          card.remove();
+          showToast('Station deleted', 'success');
+          if (!listEl.querySelector('.station-card')) {
+            listEl.innerHTML = '<div class="empty-state"><p>No stations configured yet.</p></div>';
+          }
+        }).catch(function(err) {
+          showToast('Error: ' + err.message, 'error');
+          btn.disabled = false;
+          btn.textContent = 'Delete';
+        });
       });
     });
   }).catch(function(err) {
