@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 )
@@ -34,6 +35,13 @@ func (n *NiagaraConnector) basicAuth(username, password string) string {
 
 func (n *NiagaraConnector) TestConnection(host string, port int, protocol, username, password string) ConnResult {
 	client := n.newClient(10 * time.Second)
+	// Hit the base ORD endpoint. Niagara returns 302 → station:|slot:/ on
+	// successful auth. We disable redirects so we can inspect the status code
+	// directly: 302 = auth OK, 401/403 = bad creds.
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
 	url := fmt.Sprintf("%s://%s:%d/ord", protocol, host, port)
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -41,7 +49,6 @@ func (n *NiagaraConnector) TestConnection(host string, port int, protocol, usern
 		return ConnResult{OK: false, Error: fmt.Sprintf("invalid request: %v", err)}
 	}
 	req.SetBasicAuth(username, password)
-	req.Header.Set("Accept", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -51,7 +58,7 @@ func (n *NiagaraConnector) TestConnection(host string, port int, protocol, usern
 	io.Copy(io.Discard, resp.Body)
 
 	switch resp.StatusCode {
-	case 200, 404:
+	case 200, 302:
 		return ConnResult{OK: true}
 	case 401:
 		return ConnResult{OK: false, Error: "invalid username or password"}
@@ -63,122 +70,73 @@ func (n *NiagaraConnector) TestConnection(host string, port int, protocol, usern
 }
 
 func (n *NiagaraConnector) FetchTree(host string, port int, protocol, username, password string) TreeResult {
-	// 15s per format is plenty for a healthy Niagara station. 7 formats * 15s
-	// is still too long if the station is unreachable, so we also bail out on
-	// network errors immediately rather than burning the full budget.
-	client := n.newClient(15 * time.Second)
+	client := n.newClient(30 * time.Second)
 	baseURL := fmt.Sprintf("%s://%s:%d", protocol, host, port)
 
-	const bqlQuery = "station:|slot:/Drivers|bql:select%20slotPath,%20type%20as%20'Point%20Type',%20facets%20from%20control:ControlPoint"
+	// Path-based ORD with fullScreen view returns an HTML table we can parse.
+	bqlQuery := "station:%7Cslot:/Drivers%7Cbql:select%20slotPath,%20type%20as%20'Point%20Type',%20facets%20from%20control:ControlPoint%7Cview:?fullScreen=true"
+	ordURL := fmt.Sprintf("%s/ord/%s", baseURL, bqlQuery)
 
-	formatOptions := []string{
-		"&format=csv",
-		"&export=csv",
-		"&view=csv",
-		"|view:web:CsvView",
-		"|view:web:TextView",
-		"|view:web:TableToCsv",
-		"", // fallback: HTML parsing
+	log.Printf("FetchTree: %s", ordURL)
+
+	req, err := http.NewRequest("GET", ordURL, nil)
+	if err != nil {
+		return TreeResult{OK: false, Error: fmt.Sprintf("invalid request: %v", err)}
+	}
+	req.SetBasicAuth(username, password)
+	req.Header.Set("Accept", "text/html, */*")
+
+	start := time.Now()
+	resp, err := client.Do(req)
+	elapsed := time.Since(start)
+	if err != nil {
+		return TreeResult{OK: false, Error: fmt.Sprintf("cannot reach station: %v", err)}
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return TreeResult{OK: false, Error: fmt.Sprintf("read error: %v", err)}
 	}
 
-	var csvContent string
-	var lastResp *http.Response
-	var lastNetErr error
+	log.Printf("FetchTree: HTTP %d in %s (%d bytes)", resp.StatusCode, elapsed, len(body))
 
-	log.Printf("FetchTree: %s (trying %d formats)", baseURL, len(formatOptions))
-
-	for i, fmtParam := range formatOptions {
-		testURL := fmt.Sprintf("%s/ord?%s%s", baseURL, bqlQuery, fmtParam)
-
-		req, err := http.NewRequest("GET", testURL, nil)
-		if err != nil {
-			continue
-		}
-		req.SetBasicAuth(username, password)
-		req.Header.Set("Accept", "text/csv, text/plain, application/xml, */*")
-
-		start := time.Now()
-		resp, err := client.Do(req)
-		elapsed := time.Since(start)
-		if err != nil {
-			log.Printf("  format[%d] %q → network error after %s: %v", i, fmtParam, elapsed, err)
-			lastNetErr = err
-			// Network failure (timeout, connection refused, TLS issue). Retrying
-			// the same host with different query params will just hit the same
-			// failure again, so stop here.
-			break
-		}
-
-		body, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			log.Printf("  format[%d] %q → read error: %v", i, fmtParam, err)
-			continue
-		}
-
-		lastResp = resp
-		log.Printf("  format[%d] %q → HTTP %d in %s (%d bytes)", i, fmtParam, resp.StatusCode, elapsed, len(body))
-
-		if resp.StatusCode == 401 || resp.StatusCode == 403 {
-			return TreeResult{OK: false, Error: "authentication failed"}
-		}
-		if resp.StatusCode != 200 {
-			continue
-		}
-
-		data := string(body)
-
-		// Check if we got CSV (not HTML)
-		if !strings.Contains(data, "<!DOCTYPE") && !strings.Contains(data, "<html") {
-			csvContent = data
-			break
-		}
-
-		// If this is the fallback (empty string), try parsing HTML
-		if fmtParam == "" {
-			csv := fetchIframeContent(data, baseURL, username, password, client)
-			if csv != "" {
-				csvContent = csv
-				break
-			}
-		}
-	}
-
-	if lastNetErr != nil && csvContent == "" {
-		return TreeResult{OK: false, Error: fmt.Sprintf("cannot reach station: %v", lastNetErr)}
-	}
-
-	if csvContent != "" {
-		equipment := parseStationTree(csvContent)
-		root := buildTree(equipment)
-		return TreeResult{OK: true, Root: root}
-	}
-
-	if lastResp == nil {
-		return TreeResult{OK: false, Error: "no response from station"}
-	}
-
-	if lastResp.StatusCode == 401 {
+	switch resp.StatusCode {
+	case 401, 403:
 		return TreeResult{OK: false, Error: "authentication failed"}
+	case 404:
+		return TreeResult{OK: false, Error: "ORD servlet returned 404 - check that /Drivers exists and the web service is enabled"}
+	}
+	if resp.StatusCode != 200 {
+		return TreeResult{OK: false, Error: fmt.Sprintf("station returned HTTP %d", resp.StatusCode)}
 	}
 
-	return TreeResult{OK: false, Error: fmt.Sprintf("failed to fetch tree: %d", lastResp.StatusCode)}
+	csvContent := parseHTMLTableToCSV(string(body))
+	if csvContent == "" {
+		return TreeResult{OK: false, Error: "could not parse BQL response - no table found in response"}
+	}
+
+	equipment := parseStationTree(csvContent)
+	root := buildTree(equipment)
+	return TreeResult{OK: true, Root: root}
 }
 
 func (n *NiagaraConnector) FetchSnapshot(host string, port int, protocol, username, password, equipmentPath string) SnapResult {
 	client := n.newClient(30 * time.Second)
 	baseURL := fmt.Sprintf("%s://%s:%d", protocol, host, port)
 
-	bqlQuery := fmt.Sprintf("station:|slot:%s|bql:select%%20slotPath,%%20out.value%%20as%%20'Value',%%20status%%20as%%20'Status'%%20from%%20control:ControlPoint", equipmentPath)
+	// URL-encode the equipment path for the ORD path segment.
+	encodedPath := strings.ReplaceAll(equipmentPath, " ", "%20")
+	bqlQuery := fmt.Sprintf("station:%%7Cslot:%s%%7Cbql:select%%20slotPath,%%20out.value%%20as%%20'Value',%%20status%%20as%%20'Status'%%20from%%20control:ControlPoint%%7Cview:?fullScreen=true", encodedPath)
 
-	url := fmt.Sprintf("%s/ord?%s", baseURL, bqlQuery)
+	ordURL := fmt.Sprintf("%s/ord/%s", baseURL, bqlQuery)
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", ordURL, nil)
 	if err != nil {
 		return SnapResult{OK: false, Error: fmt.Sprintf("invalid request: %v", err)}
 	}
 	req.SetBasicAuth(username, password)
-	req.Header.Set("Accept", "text/csv, text/plain, */*")
+	req.Header.Set("Accept", "text/html, */*")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -191,22 +149,14 @@ func (n *NiagaraConnector) FetchSnapshot(host string, port int, protocol, userna
 		return SnapResult{OK: false, Error: fmt.Sprintf("read error: %v", err)}
 	}
 
-	if resp.StatusCode == 401 {
+	if resp.StatusCode == 401 || resp.StatusCode == 403 {
 		return SnapResult{OK: false, Error: "authentication failed"}
 	}
 	if resp.StatusCode != 200 {
 		return SnapResult{OK: false, Error: fmt.Sprintf("failed to fetch snapshot: %d", resp.StatusCode)}
 	}
 
-	data := string(body)
-	var csvContent string
-
-	if strings.Contains(data, "<!DOCTYPE") || strings.Contains(data, "<html") {
-		csvContent = fetchIframeContent(data, baseURL, username, password, client)
-	} else {
-		csvContent = data
-	}
-
+	csvContent := parseHTMLTableToCSV(string(body))
 	if csvContent == "" {
 		return SnapResult{OK: false, Error: "could not parse snapshot response"}
 	}
@@ -218,54 +168,6 @@ func (n *NiagaraConnector) FetchSnapshot(host string, port int, protocol, userna
 // ---------------------------------------------------------------------------
 // Private helpers
 // ---------------------------------------------------------------------------
-
-// fetchIframeContent finds an iframe with id='servletViewWidget', fetches its
-// src, and parses the HTML table within.
-func fetchIframeContent(html, baseURL, username, password string, client *http.Client) string {
-	re := regexp.MustCompile(`(?i)<iframe[^>]+id=['"]servletViewWidget['"][^>]+src=['"]([^'"]+)['"]`)
-	m := re.FindStringSubmatch(html)
-
-	var iframeURL string
-	if m != nil {
-		iframeURL = m[1]
-	}
-
-	if iframeURL != "" {
-		// Decode HTML entities
-		iframeURL = strings.ReplaceAll(iframeURL, "&#x27;", "'")
-		iframeURL = strings.ReplaceAll(iframeURL, "&#39;", "'")
-		iframeURL = strings.ReplaceAll(iframeURL, "&quot;", `"`)
-		iframeURL = strings.ReplaceAll(iframeURL, "&amp;", "&")
-		iframeURL = strings.ReplaceAll(iframeURL, "&lt;", "<")
-		iframeURL = strings.ReplaceAll(iframeURL, "&gt;", ">")
-
-		// Make relative URL absolute
-		if strings.HasPrefix(iframeURL, "/") {
-			iframeURL = baseURL + iframeURL
-		}
-
-		req, err := http.NewRequest("GET", iframeURL, nil)
-		if err == nil {
-			req.SetBasicAuth(username, password)
-			req.Header.Set("Accept", "text/html, */*")
-
-			resp, err := client.Do(req)
-			if err == nil {
-				body, err := io.ReadAll(resp.Body)
-				resp.Body.Close()
-				if err == nil && resp.StatusCode == 200 {
-					csv := parseHTMLTableToCSV(string(body))
-					if csv != "" {
-						return csv
-					}
-				}
-			}
-		}
-	}
-
-	// Fallback: try to find a table in the main HTML
-	return parseHTMLTableToCSV(html)
-}
 
 // parseHTMLTableToCSV extracts the first HTML table into CSV lines.
 func parseHTMLTableToCSV(html string) string {
@@ -592,8 +494,15 @@ func buildTree(equipment []DiscoveredEquipment) *TreeNode {
 		}
 	}
 
-	// Build tree from paths
+	// Sort paths for deterministic tree order
+	sortedPaths := make([]string, 0, len(allPaths))
 	for p := range allPaths {
+		sortedPaths = append(sortedPaths, p)
+	}
+	sort.Strings(sortedPaths)
+
+	// Build tree from paths
+	for _, p := range sortedPaths {
 		parts := splitPath(p)
 		// Filter out "points"
 		var filtered []string
@@ -627,7 +536,27 @@ func buildTree(equipment []DiscoveredEquipment) *TreeNode {
 	// Mark equipment nodes and set paths
 	markEquipmentNodes(root, "", equipment)
 
+	// Sort all children alphabetically
+	sortTreeChildren(root)
+
 	return root
+}
+
+// sortTreeChildren recursively sorts children alphabetically with folders first.
+func sortTreeChildren(node *TreeNode) {
+	if len(node.Children) == 0 {
+		return
+	}
+	sort.Slice(node.Children, func(i, j int) bool {
+		// Folders (non-equipment) before equipment
+		if node.Children[i].IsEquipment != node.Children[j].IsEquipment {
+			return !node.Children[i].IsEquipment
+		}
+		return strings.ToLower(node.Children[i].Name) < strings.ToLower(node.Children[j].Name)
+	})
+	for _, child := range node.Children {
+		sortTreeChildren(child)
+	}
 }
 
 // markEquipmentNodes sets isEquipment, hasEquipment, pointCount, and path on

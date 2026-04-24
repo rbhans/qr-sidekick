@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "qr-server",
+      "runtimeExecutable": "go",
+      "runtimeArgs": ["run", "."],
+      "port": 8080,
+      "cwd": "server"
+    },
+    {
+      "name": "landing",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8090"],
+      "port": 8090,
+      "cwd": "site"
+    }
+  ]
+}

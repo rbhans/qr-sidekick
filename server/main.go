@@ -1,12 +1,12 @@
 package main
 
 import (
+	"crypto/tls"
 	"embed"
 	"flag"
 	"fmt"
 	"io/fs"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,8 +16,10 @@ import (
 var webFiles embed.FS
 
 func main() {
-	port := flag.Int("port", 8080, "Port to listen on")
-	dataDir := flag.String("data-dir", "", "Directory for database (default: ~/.qr-sidekick)")
+	port := flag.Int("port", 8080, "HTTP port to listen on")
+	httpsPort := flag.Int("https-port", 8443, "HTTPS port to listen on (0 to disable)")
+	enableMDNS := flag.Bool("mdns", true, "Advertise qrsidekick.local via mDNS/Bonjour")
+	dataDir := flag.String("data-dir", "", "Directory for database + cert (default: ~/.qr-sidekick)")
 	flag.Parse()
 
 	if *dataDir == "" {
@@ -48,30 +50,57 @@ func main() {
 	}
 
 	srv := NewServer(db, connectors, webFS)
+	srv.HTTPPort = *port
+	srv.HTTPSPort = *httpsPort
+	srv.MDNSHost = MDNSFullHost
 
-	addr := fmt.Sprintf(":%d", *port)
-	localIP := getLocalIP()
+	// mDNS: advertise qrsidekick.local. Non-fatal if it fails (firewall, etc).
+	if *enableMDNS {
+		shutdown, err := StartMDNS(*port)
+		if err != nil {
+			log.Printf("mDNS: failed to start (%v) — falling back to IP only", err)
+		} else {
+			defer shutdown()
+		}
+	}
+
+	// HTTPS: generate self-signed cert on first run. Non-fatal.
+	if *httpsPort > 0 {
+		cert, certPath, err := LoadOrGenerateCert(*dataDir)
+		if err != nil {
+			log.Printf("HTTPS: cert error (%v) — disabled", err)
+		} else {
+			srv.CertPath = certPath
+			go func() {
+				addr := fmt.Sprintf(":%d", *httpsPort)
+				httpsSrv := &http.Server{
+					Addr:      addr,
+					Handler:   srv,
+					TLSConfig: &tls.Config{Certificates: []tls.Certificate{cert}},
+				}
+				log.Printf("HTTPS listening on %s", addr)
+				if err := httpsSrv.ListenAndServeTLS("", ""); err != nil {
+					log.Printf("HTTPS: %v", err)
+				}
+			}()
+		}
+	}
+
+	localIP := PrimaryLocalIP()
 
 	fmt.Println()
 	fmt.Println("  QR Sidekick Server")
 	fmt.Println("  ──────────────────")
-	fmt.Printf("  Local:   http://localhost:%d\n", *port)
-	fmt.Printf("  Network: http://%s:%d\n", localIP, *port)
-	fmt.Printf("  Data:    %s\n", *dataDir)
+	fmt.Printf("  Local:    http://localhost:%d\n", *port)
+	fmt.Printf("  Network:  http://%s:%d\n", localIP, *port)
+	if *enableMDNS {
+		fmt.Printf("  mDNS:     http://%s:%d\n", MDNSFullHost, *port)
+	}
+	if *httpsPort > 0 {
+		fmt.Printf("  HTTPS:    https://%s:%d\n", localIP, *httpsPort)
+	}
+	fmt.Printf("  Data:     %s\n", *dataDir)
 	fmt.Println()
 
-	log.Fatal(http.ListenAndServe(addr, srv))
-}
-
-func getLocalIP() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return "localhost"
-	}
-	for _, a := range addrs {
-		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() && ipnet.IP.To4() != nil {
-			return ipnet.IP.String()
-		}
-	}
-	return "localhost"
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), srv))
 }

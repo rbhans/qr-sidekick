@@ -105,7 +105,81 @@ window.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('/sw.js');
   }
   render();
+  setupInstallBanner();
 });
+
+// --- PWA install banner ---
+
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+}
+
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+function setupInstallBanner() {
+  if (isStandalone()) return;
+  if (localStorage.getItem('pwa-dismissed')) return;
+
+  // Only show on equipment view — that's where techs live.
+  if (getRoute().path !== 'equipment') {
+    window.addEventListener('hashchange', setupInstallBanner, { once: true });
+    return;
+  }
+
+  // Wait one beat so the equipment renderer has written its markup.
+  setTimeout(showInstallBanner, 1200);
+}
+
+function showInstallBanner() {
+  if (document.getElementById('pwa-banner')) return;
+  if (isStandalone()) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'pwa-banner';
+  banner.className = 'pwa-banner';
+
+  const hint = isIOS()
+    ? 'Tap Share → Add to Home Screen for faster access next scan.'
+    : deferredInstallPrompt
+      ? 'Install this app for faster access on future scans.'
+      : 'Add this page to your home screen for faster scans.';
+
+  banner.innerHTML =
+    '<div class="pwa-banner-text">' + hint + '</div>' +
+    '<div class="pwa-banner-actions">' +
+      (deferredInstallPrompt ? '<button id="pwa-install" class="btn btn-sm btn-primary">Install</button>' : '') +
+      '<button id="pwa-dismiss" class="btn btn-sm">Dismiss</button>' +
+    '</div>';
+
+  document.body.appendChild(banner);
+
+  const installBtn = document.getElementById('pwa-install');
+  if (installBtn) {
+    installBtn.addEventListener('click', () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.finally(() => {
+        deferredInstallPrompt = null;
+        banner.remove();
+        localStorage.setItem('pwa-dismissed', '1');
+      });
+    });
+  }
+  document.getElementById('pwa-dismiss').addEventListener('click', () => {
+    banner.remove();
+    localStorage.setItem('pwa-dismissed', '1');
+  });
+}
 
 // --- Stubs (replaced by scanner.js, equipment.js, admin.js) ---
 

@@ -21,6 +21,8 @@ function renderAdmin(container, params) {
     renderEquipmentForm(container, id);
   } else if (sub === 'equipment') {
     renderEquipmentList(container);
+  } else if (sub === 'network') {
+    renderNetworkInfo(container);
   } else {
     renderAdminDashboard(container);
   }
@@ -42,6 +44,10 @@ function renderAdminDashboard(container) {
         '<h3>Equipment &amp; QR Codes</h3>' +
         '<p style="margin:0">Manage equipment configurations and QR codes</p>' +
       '</div>' +
+      '<div class="card" id="admin-network-card" style="cursor:pointer">' +
+        '<h3>Network</h3>' +
+        '<p style="margin:0">Server addresses, HTTPS cert, QR host</p>' +
+      '</div>' +
     '</div>';
 
   document.getElementById('admin-stations-card').addEventListener('click', function() {
@@ -49,6 +55,112 @@ function renderAdminDashboard(container) {
   });
   document.getElementById('admin-equipment-card').addEventListener('click', function() {
     navigate('#/admin/equipment');
+  });
+  document.getElementById('admin-network-card').addEventListener('click', function() {
+    navigate('#/admin/network');
+  });
+}
+
+/* ---- Network Info ---- */
+
+function renderNetworkInfo(container) {
+  container.innerHTML =
+    '<div class="container">' +
+      '<a href="#/admin" class="btn btn-sm mb-3">&larr; Back</a>' +
+      '<div class="section-header">' +
+        '<span class="section-label">Network</span>' +
+      '</div>' +
+      '<div id="network-info-area"><div class="loading"><div class="spinner"></div></div></div>' +
+    '</div>';
+
+  API.get('/api/network').then(function(info) {
+    var area = document.getElementById('network-info-area');
+    if (!area) return;
+
+    var ips = info.localIPs || [];
+    var httpPort = info.httpPort || 8080;
+    var httpsPort = info.httpsPort || 0;
+    var mdns = info.mdnsHost || '';
+    var certAvail = !!info.certAvailable;
+
+    var addressRows = [];
+    if (mdns) {
+      addressRows.push({ label: 'mDNS (recommended)', url: 'http://' + mdns + ':' + httpPort });
+    }
+    ips.forEach(function(ip) {
+      addressRows.push({ label: 'LAN IP', url: 'http://' + ip + ':' + httpPort });
+    });
+    if (httpsPort && mdns) {
+      addressRows.push({ label: 'HTTPS (mDNS)', url: 'https://' + mdns + ':' + httpsPort });
+    }
+    if (httpsPort) {
+      ips.forEach(function(ip) {
+        addressRows.push({ label: 'HTTPS (IP)', url: 'https://' + ip + ':' + httpsPort });
+      });
+    }
+
+    var addressHtml = addressRows.map(function(r) {
+      return '<div class="point-row">' +
+        '<span class="point-name">' + escapeHtml(r.label) + '</span>' +
+        '<span class="point-value mono" style="font-size:0.8125rem">' + escapeHtml(r.url) + '</span>' +
+      '</div>';
+    }).join('');
+
+    area.innerHTML =
+      '<div class="card-flat">' +
+        '<h3>Server Addresses</h3>' +
+        '<p class="text-tertiary" style="font-size:0.8125rem;margin-bottom:8px">' +
+          'Techs scan QR codes that point at one of these. mDNS avoids broken QRs if the server IP changes.' +
+        '</p>' +
+        addressHtml +
+      '</div>' +
+
+      '<div class="card-flat mt-3">' +
+        '<h3>QR Code Hostname</h3>' +
+        '<p class="text-tertiary" style="font-size:0.8125rem">' +
+          'Hostname baked into new printed QR codes. Change to <code>' + escapeHtml(mdns || ips[0] || 'host') + ':' + httpPort + '</code> before printing so the QR survives IP changes.' +
+        '</p>' +
+        '<div class="form-group">' +
+          '<label for="qr-host">Host:port</label>' +
+          '<input type="text" id="qr-host" class="mono" value="' + escapeAttr((mdns || ips[0] || 'localhost') + ':' + httpPort) + '">' +
+          '<div class="form-hint">Saved in this browser. Applied when regenerating QR images.</div>' +
+        '</div>' +
+        '<button id="qr-host-save" class="btn btn-primary btn-sm">Save</button>' +
+      '</div>' +
+
+      '<div class="card-flat mt-3">' +
+        '<h3>HTTPS Certificate</h3>' +
+        (certAvail
+          ? '<p class="text-tertiary" style="font-size:0.8125rem">' +
+              'Self-signed cert for <code>' + escapeHtml(mdns) + '</code> and local IPs. ' +
+              'Install on phones to silence HTTPS warnings: download, open on device, trust as root CA in system settings.' +
+            '</p>' +
+            '<a href="/cert.pem" class="btn btn-outline btn-block" download>Download cert.pem</a>'
+          : '<p class="text-tertiary" style="font-size:0.8125rem">HTTPS disabled. Start with <code>-https-port 8443</code> to enable.</p>') +
+      '</div>' +
+
+      '<div class="card-flat mt-3">' +
+        '<h3>Network Checklist</h3>' +
+        '<ul style="margin:0;padding-left:20px;font-size:0.875rem;line-height:1.6">' +
+          '<li>Phones must be on the <strong>same WiFi</strong> as this server.</li>' +
+          '<li>Disable <strong>AP isolation</strong> / <strong>client isolation</strong> on guest networks.</li>' +
+          '<li>Set a <strong>DHCP reservation</strong> for this machine so the IP does not change.</li>' +
+          '<li>Windows clients need <strong>Bonjour</strong> installed to resolve <code>.local</code>.</li>' +
+        '</ul>' +
+      '</div>';
+
+    document.getElementById('qr-host-save').addEventListener('click', function() {
+      var val = document.getElementById('qr-host').value.trim();
+      if (!val) { showToast('Host cannot be empty', 'error'); return; }
+      localStorage.setItem('qr-host-override', val);
+      showToast('QR host saved', 'success');
+    });
+
+    var saved = localStorage.getItem('qr-host-override');
+    if (saved) document.getElementById('qr-host').value = saved;
+  }).catch(function() {
+    var area = document.getElementById('network-info-area');
+    if (area) area.innerHTML = '<div class="empty-state"><p class="text-error">Failed to load network info.</p></div>';
   });
 }
 
@@ -216,7 +328,11 @@ function renderStationForm(container, stationId) {
         btn.disabled = true;
         btn.textContent = 'Testing...';
         API.post('/api/stations/' + stationId + '/test', {}).then(function(res) {
-          showToast(res.message || 'Connection successful', 'success');
+          if (res.ok) {
+            showToast('Connection successful', 'success');
+          } else {
+            showToast('Test failed: ' + (res.error || 'unknown error'), 'error');
+          }
         }).catch(function(err) {
           showToast('Test failed: ' + err.message, 'error');
         }).then(function() {
@@ -290,10 +406,11 @@ function renderEquipmentList(container) {
     }
 
     listEl.innerHTML = equipment.map(function(eq) {
+      var name = eq.equipmentName || eq.name || 'Unnamed';
       return '<div class="card" style="cursor:pointer" data-qrid="' + escapeAttr(eq.qrId) + '">' +
         '<div class="flex flex-between flex-center">' +
           '<div style="flex:1;min-width:0">' +
-            '<h3>' + escapeHtml(eq.name) + '</h3>' +
+            '<h3>' + escapeHtml(name) + '</h3>' +
             '<small class="mono" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
               escapeHtml(eq.equipmentPath || '') +
             '</small>' +
@@ -301,14 +418,17 @@ function renderEquipmentList(container) {
               ? '<small class="text-tertiary">' + escapeHtml(stationMap[eq.stationId]) + '</small>'
               : '') +
           '</div>' +
-          '<button class="btn btn-sm btn-outline eq-qr-btn" data-qrid="' + escapeAttr(eq.qrId) + '">QR</button>' +
+          '<div class="flex gap-1">' +
+            '<a href="#/equipment/' + escapeAttr(eq.qrId) + '" class="btn btn-sm btn-outline eq-view-btn" title="View live data">View</a>' +
+            '<button class="btn btn-sm btn-outline eq-qr-btn" data-qrid="' + escapeAttr(eq.qrId) + '">QR</button>' +
+          '</div>' +
         '</div>' +
       '</div>';
     }).join('');
 
     listEl.querySelectorAll('.card').forEach(function(card) {
       card.addEventListener('click', function(e) {
-        if (e.target.closest('.eq-qr-btn')) return;
+        if (e.target.closest('.eq-qr-btn') || e.target.closest('.eq-view-btn')) return;
         navigate('#/admin/equipment/' + card.getAttribute('data-qrid'));
       });
     });
@@ -475,7 +595,7 @@ function buildEquipmentBody() {
   var pointPaths = pointsRaw ? pointsRaw.split('\n').map(function(l) { return l.trim(); }).filter(Boolean) : [];
 
   var body = {
-    name: document.getElementById('eq-name').value.trim(),
+    equipmentName: document.getElementById('eq-name').value.trim(),
     equipmentPath: document.getElementById('eq-path').value.trim(),
     bqlQuery: document.getElementById('eq-bql').value.trim(),
     pointPaths: pointPaths,
@@ -483,8 +603,8 @@ function buildEquipmentBody() {
   };
 
   var stationSelect = document.getElementById('eq-station');
-  if (!stationSelect.disabled) {
-    body.stationId = stationSelect.value;
+  if (!stationSelect.disabled && stationSelect.value) {
+    body.stationId = parseInt(stationSelect.value, 10);
   }
   return body;
 }
@@ -506,7 +626,7 @@ function renderQrView(container, qrId) {
       '<h1>' + escapeHtml(eq.name) + '</h1>' +
       (eq.location ? '<p>' + escapeHtml(eq.location) + '</p>' : '') +
       '<div style="background:#fff;border-radius:12px;padding:16px;text-align:center;margin:16px 0">' +
-        '<img src="/api/admin/equipment/' + encodeURIComponent(qrId) + '/qr.png" alt="QR Code" ' +
+        '<img src="' + qrImageSrc(qrId) + '" alt="QR Code" ' +
           'style="max-width:280px;width:100%;image-rendering:pixelated">' +
       '</div>' +
       '<div class="flex gap-2">' +
@@ -526,6 +646,14 @@ function renderQrView(container, qrId) {
 }
 
 /* ---- Helpers ---- */
+
+// qrImageSrc builds the QR PNG URL, appending ?host= if admin saved an override.
+function qrImageSrc(qrId) {
+  var base = '/api/admin/equipment/' + encodeURIComponent(qrId) + '/qr.png';
+  var host = localStorage.getItem('qr-host-override');
+  if (host) base += '?host=' + encodeURIComponent(host);
+  return base;
+}
 
 function escapeAttr(str) {
   if (!str) return '';

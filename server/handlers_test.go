@@ -202,6 +202,48 @@ func TestQRCodeEndpoint(t *testing.T) {
 	}
 }
 
+func TestBuildEquipmentURL(t *testing.T) {
+	cases := []struct {
+		scheme, host, qrID, want string
+	}{
+		{"http", "192.168.1.50:8080", "abc", "http://192.168.1.50:8080/#/equipment/abc"},
+		{"https", "qrsidekick.local:8443", "xyz", "https://qrsidekick.local:8443/#/equipment/xyz"},
+		{"http", "localhost:8080", "id1", "http://localhost:8080/#/equipment/id1"},
+	}
+	for _, c := range cases {
+		got := buildEquipmentURL(c.scheme, c.host, c.qrID)
+		if got != c.want {
+			t.Errorf("buildEquipmentURL(%q,%q,%q) = %q, want %q", c.scheme, c.host, c.qrID, got, c.want)
+		}
+	}
+}
+
+func TestNetworkInfoEndpoint(t *testing.T) {
+	srv := testServer(t)
+	srv.HTTPPort = 8080
+	srv.HTTPSPort = 8443
+	srv.MDNSHost = "qrsidekick.local"
+	srv.CertPath = "/tmp/cert.pem"
+
+	req := httptest.NewRequest(http.MethodGet, "/api/network", nil)
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["mdnsHost"] != "qrsidekick.local" {
+		t.Errorf("mdnsHost = %v", got["mdnsHost"])
+	}
+	if got["certAvailable"] != true {
+		t.Errorf("certAvailable = %v", got["certAvailable"])
+	}
+}
+
 func TestListConnectors(t *testing.T) {
 	srv := testServer(t)
 

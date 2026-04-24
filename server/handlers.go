@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
@@ -16,6 +17,12 @@ type Server struct {
 	db         *Database
 	connectors *ConnectorRegistry
 	mux        *http.ServeMux
+
+	// Populated by main after construction.
+	HTTPPort  int
+	HTTPSPort int
+	MDNSHost  string
+	CertPath  string
 }
 
 // NewServer creates a new Server and registers all routes.
@@ -69,6 +76,8 @@ func (s *Server) routes(webFS fs.FS) {
 
 	// Misc
 	s.mux.HandleFunc("GET /api/connectors", s.handleListConnectors)
+	s.mux.HandleFunc("GET /api/network", s.handleNetworkInfo)
+	s.mux.HandleFunc("GET /cert.pem", s.handleDownloadCert)
 
 	// Static files (fallback for non-API routes)
 	s.mux.Handle("/", http.FileServer(http.FS(webFS)))
@@ -99,6 +108,11 @@ func readJSON(r *http.Request, v any) error {
 
 func nowISO() string {
 	return time.Now().UTC().Format(time.RFC3339)
+}
+
+// buildEquipmentURL returns the URL encoded in an equipment QR code.
+func buildEquipmentURL(scheme, host, qrID string) string {
+	return fmt.Sprintf("%s://%s/#/equipment/%s", scheme, host, qrID)
 }
 
 func parseIDParam(r *http.Request) (int64, error) {
@@ -169,6 +183,7 @@ func (s *Server) handleGetLiveData(w http.ResponseWriter, r *http.Request) {
 
 	jsonResp(w, http.StatusOK, map[string]any{
 		"equipmentName": equip.EquipmentName,
+		"equipmentPath": equip.EquipmentPath,
 		"stationName":   station.Name,
 		"location":      equip.Location,
 		"points":        points,
@@ -459,8 +474,13 @@ func (s *Server) handleQRCode(w http.ResponseWriter, r *http.Request) {
 		scheme = "http"
 	}
 	host := r.Host
+	// Allow override via query (?host=qrsidekick.local:8080) so admins can pick
+	// the hostname baked into printed QR codes.
+	if override := r.URL.Query().Get("host"); override != "" {
+		host = override
+	}
 
-	url := fmt.Sprintf("%s://%s:#/equipment/%s", scheme, host, qrID)
+	url := buildEquipmentURL(scheme, host, qrID)
 
 	png, err := generateQRPNG(url, 512)
 	if err != nil {
@@ -477,6 +497,28 @@ func (s *Server) handleQRCode(w http.ResponseWriter, r *http.Request) {
 // ---------------------------------------------------------------------------
 // Connectors handler
 // ---------------------------------------------------------------------------
+
+func (s *Server) handleNetworkInfo(w http.ResponseWriter, r *http.Request) {
+	hostname, _ := os.Hostname()
+	jsonResp(w, http.StatusOK, map[string]any{
+		"mdnsHost":      s.MDNSHost,
+		"hostname":      hostname,
+		"localIPs":      GetLocalIPs(),
+		"httpPort":      s.HTTPPort,
+		"httpsPort":     s.HTTPSPort,
+		"certAvailable": s.CertPath != "",
+	})
+}
+
+func (s *Server) handleDownloadCert(w http.ResponseWriter, r *http.Request) {
+	if s.CertPath == "" {
+		jsonError(w, http.StatusNotFound, "HTTPS not enabled — no certificate available")
+		return
+	}
+	w.Header().Set("Content-Type", "application/x-pem-file")
+	w.Header().Set("Content-Disposition", `attachment; filename="qrsidekick.pem"`)
+	http.ServeFile(w, r, s.CertPath)
+}
 
 func (s *Server) handleListConnectors(w http.ResponseWriter, r *http.Request) {
 	type connectorInfo struct {

@@ -106,13 +106,13 @@ function loadEquipment(container, qrId) {
 }
 
 function renderEquipmentData(container, qrId, data, notes) {
-  var equipName = data.name || data.equipment_name || 'Unknown Equipment';
-  var stationName = data.station_name || data.stationName || '';
+  var equipName = data.equipmentName || data.name || 'Unknown Equipment';
+  var stationName = data.stationName || '';
   var online = data.online !== false;
   var location = data.location || '';
-  var path = data.path || data.equipment_path || '';
+  var path = data.equipmentPath || data.path || '';
   var points = data.points || [];
-  var lastUpdated = data.last_updated || data.lastUpdated || null;
+  var lastUpdated = data.queriedAt || data.lastUpdated || null;
 
   var html =
     '<div class="container">' +

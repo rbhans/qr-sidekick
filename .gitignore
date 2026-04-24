@@ -58,3 +58,6 @@ ios/build/
 
 # Go server binary
 server/qr-sidekick-server
+
+# Claude Code local settings
+.claude/settings.local.json

@@ -3,13 +3,13 @@
    ============================================ */
 
 :root {
-  --background: #151c14;
-  --surface: #1f2920;
-  --surface-hover: #283528;
-  --border: #2d3a2b;
+  --background: #0A0A0A;
+  --surface: #141414;
+  --surface-hover: #1e1e1e;
+  --border: #2a2a2a;
   --text-primary: #f1efe6;
-  --text-secondary: #a8a693;
-  --text-tertiary: #6b7266;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #6b6b6b;
   --accent: #c08621;
   --accent-hover: #d4951f;
   --error: #8b2914;
@@ -747,6 +747,56 @@ label {
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
 }
 
+/* html5-qrcode library overrides */
+#qr-reader {
+  border: none !important;
+  background: #000;
+}
+
+#qr-reader__dashboard_section,
+#qr-reader__dashboard_section_csr,
+#qr-reader__dashboard_section_fsr,
+#qr-reader__dashboard {
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  padding: 12px !important;
+}
+
+#qr-reader button {
+  background: var(--accent) !important;
+  color: #0A0A0A !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 8px 14px !important;
+  font-family: inherit !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+}
+
+#qr-reader button:hover {
+  background: var(--accent-hover) !important;
+}
+
+#qr-reader a,
+#qr-reader__dashboard_section_swaplink {
+  color: var(--accent) !important;
+  text-decoration: none !important;
+}
+
+#qr-reader select,
+#qr-reader input[type="file"] {
+  background: var(--background) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+}
+
+#qr-reader img {
+  filter: invert(0.85);
+}
+
 /* ---- Modal / Dialog ---- */
 
 .modal-backdrop {
@@ -878,4 +928,33 @@ label {
   .btn {
     padding: 10px 16px;
   }
+}
+
+/* ---- PWA Install Banner ---- */
+
+.pwa-banner {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pwa-banner-text {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.pwa-banner-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
