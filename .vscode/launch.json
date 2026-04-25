@@ -2,33 +2,19 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "qr_sidekick (debug)",
+      "name": "QR Sidekick Server",
+      "type": "go",
       "request": "launch",
-      "type": "dart",
-      "program": "lib/main.dart",
-      "toolArgs": [
-        "--dart-define=SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3ZG9rbHBsdW5sYXFha2l5YWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyNTQ4NTgsImV4cCI6MjA3NzgzMDg1OH0.ralsEJ8t6Cu1prIIiWqvuiw-WVP0RjxX1TAw9Bkqffw"
-      ]
+      "mode": "auto",
+      "program": "${workspaceFolder}/server",
+      "args": ["-port", "8080"]
     },
     {
-      "name": "qr_sidekick (profile)",
+      "name": "Marketing Site",
+      "type": "node-terminal",
       "request": "launch",
-      "type": "dart",
-      "program": "lib/main.dart",
-      "flutterMode": "profile",
-      "toolArgs": [
-        "--dart-define=SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3ZG9rbHBsdW5sYXFha2l5YWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyNTQ4NTgsImV4cCI6MjA3NzgzMDg1OH0.ralsEJ8t6Cu1prIIiWqvuiw-WVP0RjxX1TAw9Bkqffw"
-      ]
-    },
-    {
-      "name": "qr_sidekick (release)",
-      "request": "launch",
-      "type": "dart",
-      "program": "lib/main.dart",
-      "flutterMode": "release",
-      "toolArgs": [
-        "--dart-define=SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3ZG9rbHBsdW5sYXFha2l5YWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyNTQ4NTgsImV4cCI6MjA3NzgzMDg1OH0.ralsEJ8t6Cu1prIIiWqvuiw-WVP0RjxX1TAw9Bkqffw"
-      ]
+      "command": "python3 -m http.server 8090",
+      "cwd": "${workspaceFolder}/site"
     }
   ]
 }

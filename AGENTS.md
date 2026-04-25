@@ -1,10 +1,10 @@
-# QR Sidekick - Project Instructions
+# QR Sidekick - Agent Instructions
 
 ## Project Overview
 
-QR Sidekick is a self-hosted Go server and browser PWA for BAS technicians. It runs on the local network, stores station/equipment configuration in SQLite, proxies Niagara requests server-side, and serves QR-code equipment pages that technicians open with a phone camera.
+QR Sidekick is a self-hosted Go server and browser PWA for BAS technicians. This repo now contains only the server, embedded PWA, and static marketing site.
 
-This repo now contains only the self-hosted server, embedded PWA, and static marketing site.
+Technicians scan QR codes with a phone camera and open equipment pages in the browser. The local server fetches live Niagara station data and stores configuration in SQLite.
 
 ## Tech Stack
 
@@ -67,5 +67,3 @@ go build -trimpath -ldflags="-s -w" -o qr-sidekick-server .
 ## GitHub Pages
 
 The Pages workflow publishes `site/`. Configure GitHub Pages to use **GitHub Actions**, not branch/root publishing.
-
-If branch/root publishing is accidentally selected, the root `index.html` only redirects to `site/`; it is not the primary deployment mode.

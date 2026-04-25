@@ -1,16 +1,51 @@
-# qr_sidekick
+# QR Sidekick
 
-A new Flutter project.
+Self-hosted QR equipment pages for BAS teams. Run one small server on the local network, add Niagara stations, print QR codes for equipment, and let technicians scan with a phone camera to see live point data in the browser.
 
-## Getting Started
+No app store. No cloud backend. No technician logins.
 
-This project is a starting point for a Flutter application.
+## What Is In This Repo
 
-A few resources to get you started if this is your first Flutter project:
+```
+server/              Go server, embedded PWA, SQLite storage, Niagara connector
+site/                Static marketing/download site for GitHub Pages
+docs/superpowers/    Implementation planning notes
+.github/workflows/   Pages deployment and release builds
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Quick Start
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+cd server
+go run .
+```
+
+Open `http://localhost:8080`, add a station from Admin, configure equipment, then print QR codes.
+
+The server stores data in `~/.qr-sidekick/qr_sidekick.db` by default. Use flags to change runtime behavior:
+
+```bash
+go run . -port 8080 -data-dir ~/.qr-sidekick
+```
+
+## Build
+
+```bash
+cd server
+go build -trimpath -ldflags="-s -w" -o qr-sidekick-server .
+```
+
+Cross-platform release builds are handled by `.github/workflows/release.yml` when pushing a `v*` tag.
+
+## Test
+
+```bash
+cd server
+go test ./...
+```
+
+## Marketing Site
+
+The public GitHub Pages site lives in `site/`. The Pages workflow publishes that directory through GitHub Actions.
+
+In GitHub Pages settings, use **GitHub Actions** as the source. If Pages is pointed at the repository root instead, the root `index.html` redirects to `site/` as a fallback, but the intended deployment path is the workflow.

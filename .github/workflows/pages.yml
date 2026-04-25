@@ -18,19 +18,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  pages-unavailable:
+    if: ${{ github.event.repository.private == true }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip GitHub Pages deploy
+        run: |
+          echo "GitHub Pages is unavailable for this private repository on the current GitHub plan."
+          echo "Make the repository public, upgrade the plan, or deploy the site to another host."
+
   deploy:
+    if: ${{ github.event.repository.private == false }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - uses: actions/configure-pages@v5
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
 
-      - uses: actions/upload-pages-artifact@v3
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

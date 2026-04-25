@@ -1,63 +1,27 @@
-# Environment (keep .env.example, ignore actual .env)
+# Local environment
 .env
-!.env.example
 
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
+# OS and editor files
 .DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
+*.swp
 .idea/
+*.iml
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# Logs and temporary files
+*.log
+tmp/
+dist/
+coverage/
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android signing
-android/key.properties
-android/upload-keystore.jks
-*.jks
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# iOS build artifacts
-ios/build/
-
-# Go server binary
+# Go build/test output
 server/qr-sidekick-server
+server/qr-sidekick-*
+*.test
+
+# Local app data
+qr_sidekick.db
+*.db-shm
+*.db-wal
 
 # Claude Code local settings
 .claude/settings.local.json

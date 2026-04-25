@@ -20,7 +20,7 @@ server/
 ├── database.go                          # SQLite schema, CRUD for stations/equipment/notes/settings
 ├── database_test.go                     # Database tests
 ├── connector.go                         # Connector interface + result types
-├── niagara.go                           # Niagara 4 connector (ported from niagara_client.dart)
+├── niagara.go                           # Niagara 4 connector
 ├── niagara_test.go                      # Niagara CSV parsing tests
 ├── handlers.go                          # All HTTP route handlers
 ├── handlers_test.go                     # API integration tests
@@ -696,7 +696,7 @@ func (r *ConnectorRegistry) All() []Connector {
 }
 ```
 
-- [ ] **Step 2: Create niagara.go (ported from niagara_client.dart)**
+- [ ] **Step 2: Create niagara.go**
 
 ```go
 package main
@@ -874,7 +874,7 @@ func (n *NiagaraConnector) FetchSnapshot(host string, port int, protocol, userna
 	return SnapResult{OK: true, Points: points}
 }
 
-// -- Private helpers (ported from niagara_client.dart) --
+// -- Private helpers --
 
 func (n *NiagaraConnector) fetchIframeContent(html, baseURL, auth string, client *http.Client) string {
 	re := regexp.MustCompile(`(?i)<iframe[^>]+id=['"]servletViewWidget['"][^>]+src=['"]([^'"]+)['"]`)
@@ -2045,7 +2045,7 @@ Camera-based QR scanner:
 
 - [ ] **Step 3: Create equipment.js**
 
-Equipment view (ported from Flutter app's equipment_screen.dart):
+Equipment view:
 - Fetches `/api/equipment/<qrId>` for live data
 - Fetches `/api/equipment/<qrId>/notes`
 - Header card: equipment name, station, location, path, online/offline badge
@@ -2082,7 +2082,7 @@ All admin views rendered within the `#/admin` hash route with internal sub-routi
 
 - [ ] **Step 2: Create tree-browser.js**
 
-Modal tree browser (ported from Flutter's equipment_tree_browser.dart):
+Modal tree browser:
 - Fetches station tree from `/api/stations/<id>/tree`
 - Renders expandable/collapsible tree nodes
 - Equipment nodes highlighted with point count
