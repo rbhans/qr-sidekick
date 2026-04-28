@@ -63,7 +63,7 @@ func NewConnectorRegistry() *ConnectorRegistry {
 }
 
 func (r *ConnectorRegistry) Register(c Connector)        { r.connectors[c.TypeID()] = c }
-func (r *ConnectorRegistry) Get(typeID string) Connector  { return r.connectors[typeID] }
+func (r *ConnectorRegistry) Get(typeID string) Connector { return r.connectors[typeID] }
 func (r *ConnectorRegistry) All() []Connector {
 	out := make([]Connector, 0, len(r.connectors))
 	for _, c := range r.connectors {

@@ -1,5 +1,5 @@
 /* ============================================
-   QR Sidekick — Admin View
+   QRBAS — Admin View
    ============================================ */
 
 function renderAdmin(container, params) {

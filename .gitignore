@@ -14,12 +14,12 @@ dist/
 coverage/
 
 # Go build/test output
-server/qr-sidekick-server
-server/qr-sidekick-*
+server/qrbas-server
+server/qrbas-*
 *.test
 
 # Local app data
-qr_sidekick.db
+qrbas.db
 *.db-shm
 *.db-wal
 

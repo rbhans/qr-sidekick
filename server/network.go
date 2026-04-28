@@ -20,7 +20,7 @@ import (
 
 // MDNSHostname is the short name advertised via mDNS.
 // The full resolvable name is MDNSHostname + ".local".
-const MDNSHostname = "qrsidekick"
+const MDNSHostname = "qrbas"
 const MDNSFullHost = MDNSHostname + ".local"
 
 // GetLocalIPs returns routable IPv4 addresses bound to local interfaces.
@@ -55,16 +55,16 @@ func PrimaryLocalIP() string {
 	return ips[0]
 }
 
-// StartMDNS advertises qrsidekick.local on the local network via mDNS/Bonjour.
+// StartMDNS advertises qrbas.local on the local network via mDNS/Bonjour.
 // Returns a shutdown function (safe to call even on error).
 func StartMDNS(port int) (func(), error) {
 	server, err := zeroconf.RegisterProxy(
-		"QR Sidekick",  // instance
-		"_http._tcp",   // service
-		"local.",       // domain
-		port,           // port
-		MDNSHostname,   // host (becomes qrsidekick.local)
-		nil,            // ifaces (all)
+		"QRBAS",      // instance
+		"_http._tcp", // service
+		"local.",     // domain
+		port,         // port
+		MDNSHostname, // host (becomes qrbas.local)
+		nil,          // ifaces (all)
 		[]string{"path=/"},
 		nil, // ips (auto)
 	)
@@ -104,7 +104,7 @@ func LoadOrGenerateCert(dataDir string) (tls.Certificate, string, error) {
 		SerialNumber: serial,
 		Subject: pkix.Name{
 			CommonName:   MDNSFullHost,
-			Organization: []string{"QR Sidekick"},
+			Organization: []string{"QRBAS"},
 		},
 		NotBefore: time.Now().Add(-time.Hour),
 		// Stay under iOS 13+ 825-day cap for maximum client acceptance.

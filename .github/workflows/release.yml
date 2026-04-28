@@ -15,16 +15,16 @@ jobs:
         include:
           - goos: darwin
             goarch: arm64
-            asset: qr-sidekick-mac-arm64
+            asset: qrbas-mac-arm64
           - goos: darwin
             goarch: amd64
-            asset: qr-sidekick-mac-amd64
+            asset: qrbas-mac-amd64
           - goos: linux
             goarch: amd64
-            asset: qr-sidekick-linux-amd64
+            asset: qrbas-linux-amd64
           - goos: windows
             goarch: amd64
-            asset: qr-sidekick-windows-amd64.exe
+            asset: qrbas-windows-amd64.exe
 
     runs-on: ubuntu-latest
 

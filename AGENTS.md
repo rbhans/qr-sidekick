@@ -1,8 +1,8 @@
-# QR Sidekick - Agent Instructions
+# QRBAS - Agent Instructions
 
 ## Project Overview
 
-QR Sidekick is a self-hosted Go server and browser PWA for BAS technicians. This repo now contains only the server, embedded PWA, and static marketing site.
+QRBAS is a self-hosted Go server and browser PWA for BAS technicians. This repo now contains only the server, embedded PWA, and static marketing site.
 
 Technicians scan QR codes with a phone camera and open equipment pages in the browser. The local server fetches live Niagara station data and stores configuration in SQLite.
 
@@ -53,14 +53,14 @@ go test ./...
 
 ```bash
 cd server
-go build -trimpath -ldflags="-s -w" -o qr-sidekick-server .
+go build -trimpath -ldflags="-s -w" -o qrbas-server .
 ```
 
 ## Runtime Notes
 
 - Default web UI: `http://localhost:8080`
-- Default data directory: `~/.qr-sidekick`
-- Default database: `~/.qr-sidekick/qr_sidekick.db`
+- Default data directory: `~/.qrbas`
+- Default database: `~/.qrbas/qrbas.db`
 - Technicians do not authenticate; the LAN boundary is the intended security model.
 - Station credentials are stored locally in SQLite and used only by the server when proxying BAS requests.
 

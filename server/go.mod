@@ -1,4 +1,4 @@
-module github.com/rbhans/qr-sidekick/server
+module github.com/rbhans/qrbas/server
 
 go 1.26.2
 

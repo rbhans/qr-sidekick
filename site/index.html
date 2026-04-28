@@ -4,17 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0A0A0A">
-  <title>QR Sidekick — Live BAS data via QR code</title>
+  <title>QRBAS — Live BAS data via QR code</title>
   <meta name="description" content="Self-hosted companion for Niagara 4. Stick a QR on the equipment, techs scan with their phone, see live data. No app install, no cloud, no logins.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;1,600&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="hero">
     <div class="wrap">
-      <div class="brand">QR Sidekick</div>
+      <div class="brand">QRBAS</div>
       <h1>Scan a QR. See the equipment live.</h1>
       <p class="lead">
         Self-hosted companion for Niagara 4 stations. Stick a QR on the AHU, VFD, boiler — a tech scans with their phone camera and sees live points in the browser. No app install, no cloud, no logins.
@@ -50,6 +51,63 @@
     </div>
   </section>
 
+  <section class="tour">
+    <div class="wrap">
+      <h2>What it looks like</h2>
+      <p class="lead sm">Admin screens for setup and browser-first technician screens for the field.</p>
+
+      <div class="screenshot-grid">
+        <figure class="shot shot-large">
+          <img src="assets/screenshots/equipment-page.png" alt="QRBAS equipment page showing live Niagara point values on a phone screen" loading="lazy">
+          <figcaption>
+            <strong>Live equipment view</strong>
+            Techs scan the QR and see current point values, status, and notes in the browser.
+          </figcaption>
+        </figure>
+
+        <figure class="shot">
+          <img src="assets/screenshots/admin.png" alt="QRBAS admin menu with stations, equipment, and network options" loading="lazy">
+          <figcaption>
+            <strong>Admin hub</strong>
+            Manage stations, equipment configs, QR codes, and network settings from one local UI.
+          </figcaption>
+        </figure>
+
+        <figure class="shot">
+          <img src="assets/screenshots/station-connection.png" alt="QRBAS station connection form for a Niagara station" loading="lazy">
+          <figcaption>
+            <strong>Station setup</strong>
+            Add a Niagara host once, then reuse it for every equipment QR.
+          </figcaption>
+        </figure>
+
+        <figure class="shot">
+          <img src="assets/screenshots/equipment-discovery.png" alt="QRBAS equipment discovery tree for selecting Niagara equipment" loading="lazy">
+          <figcaption>
+            <strong>Equipment discovery</strong>
+            Browse the station tree and choose the equipment and points technicians should see.
+          </figcaption>
+        </figure>
+
+        <figure class="shot">
+          <img src="assets/screenshots/qr-code.png" alt="QRBAS generated QR code screen for printing an equipment label" loading="lazy">
+          <figcaption>
+            <strong>Printable QR codes</strong>
+            Generate a code per unit and stick it on the equipment.
+          </figcaption>
+        </figure>
+
+        <figure class="shot">
+          <img src="assets/screenshots/scanner.png" alt="QRBAS scanner screen with camera permission prompt" loading="lazy">
+          <figcaption>
+            <strong>Phone scanner</strong>
+            Scan from the PWA or use the phone camera directly.
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
   <section class="features">
     <div class="wrap">
       <h2>Why this instead of a phone app?</h2>
@@ -57,7 +115,7 @@
         <li><strong>No cloud.</strong> Creds, notes, equipment configs live on your LAN. Never touch the internet.</li>
         <li><strong>No logins for techs.</strong> Scan → browser → data. That's it.</li>
         <li><strong>One binary.</strong> ~15MB. Windows, Mac, or Linux. No runtime, no installer, no dependencies.</li>
-        <li><strong>mDNS built in.</strong> Advertises <code>qrsidekick.local</code> so QR codes survive DHCP changes.</li>
+        <li><strong>mDNS built in.</strong> Advertises <code>qrbas.local</code> so QR codes survive DHCP changes.</li>
         <li><strong>HTTPS on first run.</strong> Self-signed cert auto-generated. Downloadable from the admin page for trusting on phones.</li>
         <li><strong>Persistent notes.</strong> Techs add notes on the equipment page; next tech sees them.</li>
         <li><strong>PWA.</strong> Optional "Add to Home Screen" for repeat access.</li>
@@ -70,19 +128,19 @@
       <h2>Download</h2>
       <p class="lead sm">Grab the binary for your OS. Latest release on GitHub.</p>
       <div class="dl-grid">
-        <a class="dl-card" id="dl-mac-arm" href="https://github.com/rbhans/qr-sidekick/releases/latest/download/qr-sidekick-mac-arm64">
+        <a class="dl-card" id="dl-mac-arm" href="https://github.com/rbhans/qr-sidekick/releases/latest/download/qrbas-mac-arm64">
           <div class="dl-os">macOS</div>
           <div class="dl-arch">Apple Silicon (M1 / M2 / M3 / M4)</div>
         </a>
-        <a class="dl-card" id="dl-mac-intel" href="https://github.com/rbhans/qr-sidekick/releases/latest/download/qr-sidekick-mac-amd64">
+        <a class="dl-card" id="dl-mac-intel" href="https://github.com/rbhans/qr-sidekick/releases/latest/download/qrbas-mac-amd64">
           <div class="dl-os">macOS</div>
           <div class="dl-arch">Intel</div>
         </a>
-        <a class="dl-card" id="dl-win" href="https://github.com/rbhans/qr-sidekick/releases/latest/download/qr-sidekick-windows-amd64.exe">
+        <a class="dl-card" id="dl-win" href="https://github.com/rbhans/qr-sidekick/releases/latest/download/qrbas-windows-amd64.exe">
           <div class="dl-os">Windows</div>
           <div class="dl-arch">64-bit</div>
         </a>
-        <a class="dl-card" id="dl-linux" href="https://github.com/rbhans/qr-sidekick/releases/latest/download/qr-sidekick-linux-amd64">
+        <a class="dl-card" id="dl-linux" href="https://github.com/rbhans/qr-sidekick/releases/latest/download/qrbas-linux-amd64">
           <div class="dl-os">Linux</div>
           <div class="dl-arch">64-bit</div>
         </a>
@@ -93,21 +151,21 @@
         <summary>macOS</summary>
         <p>The binary isn't code-signed (open source project, no Apple Developer account). Gatekeeper blocks it on first run. Strip the quarantine flag:</p>
         <pre><code>cd ~/Downloads
-chmod +x qr-sidekick-mac-arm64
-xattr -d com.apple.quarantine qr-sidekick-mac-arm64
-./qr-sidekick-mac-arm64</code></pre>
+chmod +x qrbas-mac-arm64
+xattr -d com.apple.quarantine qrbas-mac-arm64
+./qrbas-mac-arm64</code></pre>
         <p>Open <code>http://localhost:8080</code> in your browser.</p>
       </details>
       <details class="os-detail">
         <summary>Windows</summary>
         <p>SmartScreen warns on unsigned binaries. Click <strong>More info</strong> → <strong>Run anyway</strong>.</p>
-        <pre><code>qr-sidekick-windows-amd64.exe</code></pre>
+        <pre><code>qrbas-windows-amd64.exe</code></pre>
         <p>Open <code>http://localhost:8080</code> in your browser.</p>
       </details>
       <details class="os-detail">
         <summary>Linux</summary>
-        <pre><code>chmod +x qr-sidekick-linux-amd64
-./qr-sidekick-linux-amd64</code></pre>
+        <pre><code>chmod +x qrbas-linux-amd64
+./qrbas-linux-amd64</code></pre>
         <p>Open <code>http://localhost:8080</code> in your browser.</p>
       </details>
     </div>
@@ -119,7 +177,7 @@ xattr -d com.apple.quarantine qr-sidekick-mac-arm64
       <ul class="feature-list small">
         <li>Phones and server must be on the <strong>same WiFi</strong>.</li>
         <li>Disable <strong>AP isolation</strong> / <strong>client isolation</strong> on guest networks — or use your main SSID.</li>
-        <li>Set a <strong>DHCP reservation</strong> for the server so its IP doesn't change. Or use the built-in <code>qrsidekick.local</code> hostname.</li>
+        <li>Set a <strong>DHCP reservation</strong> for the server so its IP doesn't change. Or use the built-in <code>qrbas.local</code> hostname.</li>
         <li>Windows clients need <strong>Bonjour</strong> installed to resolve <code>.local</code> (bundled with iTunes and most printer drivers).</li>
         <li>Default ports: <code>8080</code> (HTTP), <code>8443</code> (HTTPS). Change with <code>-port</code> / <code>-https-port</code>.</li>
       </ul>
@@ -128,7 +186,7 @@ xattr -d com.apple.quarantine qr-sidekick-mac-arm64
 
   <footer class="foot">
     <div class="wrap">
-      <p>QR Sidekick &middot; open source &middot; <a href="https://github.com/rbhans/qr-sidekick">GitHub</a> &middot; <a href="https://github.com/rbhans/qr-sidekick/issues">Report an issue</a></p>
+      <p>QRBAS &middot; open source &middot; <a href="https://github.com/rbhans/qr-sidekick">GitHub</a> &middot; <a href="https://github.com/rbhans/qr-sidekick/issues">Report an issue</a></p>
     </div>
   </footer>
 
@@ -140,7 +198,7 @@ xattr -d com.apple.quarantine qr-sidekick-mac-arm64
       var target = null;
       if (/Mac/.test(plat)) {
         // Apple Silicon vs Intel — best effort; userAgent is not definitive.
-        target = /arm|Apple/i.test(ua) ? 'dl-mac-arm' : 'dl-mac-arm';
+        target = /arm|Apple/i.test(ua) ? 'dl-mac-arm' : 'dl-mac-intel';
       } else if (/Win/.test(plat)) {
         target = 'dl-win';
       } else if (/Linux/.test(plat)) {

@@ -30,7 +30,7 @@ server/
 │   ├── manifest.json                    # PWA manifest
 │   ├── sw.js                            # Service worker
 │   ├── css/
-│   │   └── style.css                    # Dark basidekick theme
+│   │   └── style.css                    # Dark QRBAS theme
 │   └── js/
 │       ├── app.js                       # SPA router, shared state, API helpers
 │       ├── scanner.js                   # QR camera scanner (html5-qrcode)
@@ -58,7 +58,7 @@ server/
 
 ```bash
 mkdir -p server && cd server
-go mod init github.com/user/qr-sidekick-server
+go mod init github.com/user/qrbas-server
 ```
 
 - [ ] **Step 2: Create server/main.go**
@@ -76,7 +76,7 @@ import (
 
 func main() {
 	port := flag.Int("port", 8080, "Port to listen on")
-	dataDir := flag.String("data-dir", "", "Directory for database (default: ~/.qr-sidekick)")
+	dataDir := flag.String("data-dir", "", "Directory for database (default: ~/.qrbas)")
 	flag.Parse()
 
 	if *dataDir == "" {
@@ -84,14 +84,14 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		*dataDir = filepath.Join(home, ".qr-sidekick")
+		*dataDir = filepath.Join(home, ".qrbas")
 	}
 
 	if err := os.MkdirAll(*dataDir, 0755); err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("QR Sidekick Server")
+	fmt.Println("QRBAS Server")
 	fmt.Printf("  Data: %s\n", *dataDir)
 	fmt.Printf("  Port: %d\n", *port)
 	fmt.Println()
@@ -101,7 +101,7 @@ func main() {
 
 - [ ] **Step 3: Verify it builds and runs**
 
-Run: `cd server && go build -o qr-sidekick-server && ./qr-sidekick-server --help`
+Run: `cd server && go build -o qrbas-server && ./qrbas-server --help`
 Expected: Prints usage with --port and --data-dir flags.
 
 - [ ] **Step 4: Commit**
@@ -1922,17 +1922,17 @@ git commit -m "feat: add HTTP handlers, QR generation, and API routes"
 - Create: `server/web/sw.js`
 - Create: `server/web/js/app.js`
 
-This task creates the app shell with hash-based SPA routing and the dark basidekick theme.
+This task creates the app shell with hash-based SPA routing and the dark QRBAS theme.
 
-- [ ] **Step 1: Create style.css (dark basidekick theme)**
+- [ ] **Step 1: Create style.css (dark QRBAS theme)**
 
-The CSS should define these variables (dark inversion of basidekick.com):
+The CSS should define these variables (dark inversion of qrbas.com):
 ```
 --background: #151c14    (deep forest)
---surface: #1f2920       (basidekick primary)
+--surface: #1f2920       (QRBAS primary)
 --surface-hover: #283528
 --border: #2d3a2b        (muted green)
---text-primary: #f1efe6  (basidekick background)
+--text-primary: #f1efe6  (QRBAS background)
 --text-secondary: #a8a693
 --text-tertiary: #6b7266
 --accent: #c08621        (gold)
@@ -1952,7 +1952,7 @@ Include Niagara status colors:
 --niagara-disabled: #D6D6D6
 ```
 
-Style classes matching basidekick patterns:
+Style classes matching QRBAS patterns:
 - `.mono` — JetBrains Mono, 11px, uppercase, tracking 1.2px
 - `.heading` — Fraunces, italic
 - `.section-header` — mono styling with accent-colored prefix
@@ -1977,8 +1977,8 @@ Single HTML file with:
 
 ```json
 {
-  "name": "QR Sidekick",
-  "short_name": "QR Sidekick",
+  "name": "QRBAS",
+  "short_name": "QRBAS",
   "description": "Scan equipment QR codes for live BAS data",
   "start_url": "/",
   "display": "standalone",
@@ -2019,7 +2019,7 @@ const API = {
 
 ```bash
 git add server/web/
-git commit -m "feat: add PWA shell with dark basidekick theme and SPA routing"
+git commit -m "feat: add PWA shell with dark QRBAS theme and SPA routing"
 ```
 
 ---
@@ -2125,7 +2125,7 @@ var webFiles embed.FS
 
 func main() {
 	port := flag.Int("port", 8080, "Port to listen on")
-	dataDir := flag.String("data-dir", "", "Directory for database (default: ~/.qr-sidekick)")
+	dataDir := flag.String("data-dir", "", "Directory for database (default: ~/.qrbas)")
 	flag.Parse()
 
 	if *dataDir == "" {
@@ -2133,14 +2133,14 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		*dataDir = filepath.Join(home, ".qr-sidekick")
+		*dataDir = filepath.Join(home, ".qrbas")
 	}
 
 	if err := os.MkdirAll(*dataDir, 0755); err != nil {
 		log.Fatal(err)
 	}
 
-	dbPath := filepath.Join(*dataDir, "qr_sidekick.db")
+	dbPath := filepath.Join(*dataDir, "qrbas.db")
 	db, err := NewDatabase(dbPath)
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
@@ -2164,7 +2164,7 @@ func main() {
 	localIP := getLocalIP()
 
 	fmt.Println()
-	fmt.Println("  QR Sidekick Server")
+	fmt.Println("  QRBAS Server")
 	fmt.Println("  ──────────────────")
 	fmt.Printf("  Local:   http://localhost:%d\n", *port)
 	fmt.Printf("  Network: http://%s:%d\n", localIP, *port)
@@ -2207,7 +2207,7 @@ log.Fatal(http.ListenAndServe(addr, srv))
 
 - [ ] **Step 3: Verify build and run**
 
-Run: `cd server && go build -o qr-sidekick-server && ./qr-sidekick-server`
+Run: `cd server && go build -o qrbas-server && ./qrbas-server`
 Expected: Server starts, prints local and network URLs. Ctrl+C to stop.
 
 - [ ] **Step 4: Commit**
@@ -2227,14 +2227,14 @@ git commit -m "feat: embed web files and wire up complete server"
 - [ ] **Step 1: Create README**
 
 ```markdown
-# QR Sidekick Server
+# QRBAS Server
 
-Self-hosted companion for QR Sidekick. Runs on your network — technicians scan QR codes on equipment and see live BAS data in their browser. No app store, no cloud, no logins.
+Self-hosted companion for QRBAS. Runs on your network — technicians scan QR codes on equipment and see live BAS data in their browser. No app store, no cloud, no logins.
 
 ## Quick Start
 
 1. Download for your OS from Releases
-2. Run: `./qr-sidekick-server`
+2. Run: `./qrbas-server`
 3. Open `http://localhost:8080`
 4. Add a station (enter Niagara host + credentials)
 5. Browse equipment, configure points, print QR codes
@@ -2244,16 +2244,16 @@ Self-hosted companion for QR Sidekick. Runs on your network — technicians scan
 
 ```bash
 cd server
-go build -o qr-sidekick-server
-./qr-sidekick-server
+go build -o qrbas-server
+./qrbas-server
 ```
 
 ## Cross-compile
 
 ```bash
-GOOS=windows GOARCH=amd64 go build -o qr-sidekick.exe
-GOOS=darwin  GOARCH=arm64 go build -o qr-sidekick-mac
-GOOS=linux   GOARCH=amd64 go build -o qr-sidekick-linux
+GOOS=windows GOARCH=amd64 go build -o qrbas.exe
+GOOS=darwin  GOARCH=arm64 go build -o qrbas-mac
+GOOS=linux   GOARCH=amd64 go build -o qrbas-linux
 ```
 
 ## Options
@@ -2261,7 +2261,7 @@ GOOS=linux   GOARCH=amd64 go build -o qr-sidekick-linux
 | Flag | Default | Description |
 |------|---------|-------------|
 | `-port` | 8080 | Port to listen on |
-| `-data-dir` | ~/.qr-sidekick | Database directory |
+| `-data-dir` | ~/.qrbas | Database directory |
 
 ## Adding BAS Connectors
 

@@ -1,11 +1,11 @@
-# QR Sidekick Server
+# QRBAS Server
 
-Self-hosted companion for QR Sidekick. Runs on your network — technicians scan QR codes on equipment and see live BAS data in their browser. No app store, no cloud, no logins.
+Self-hosted companion for QRBAS. Runs on your network — technicians scan QR codes on equipment and see live BAS data in their browser. No app store, no cloud, no logins.
 
 ## Quick Start
 
 1. Download for your OS from Releases
-2. Run: `./qr-sidekick-server`
+2. Run: `./qrbas-server`
 3. Open `http://localhost:8080`
 4. Go to Admin → add a Niagara station (enter host + credentials)
 5. Browse equipment, configure points, print QR codes
@@ -15,16 +15,16 @@ Self-hosted companion for QR Sidekick. Runs on your network — technicians scan
 
 ```bash
 cd server
-go build -o qr-sidekick-server
-./qr-sidekick-server
+go build -o qrbas-server
+./qrbas-server
 ```
 
 ## Cross-compile
 
 ```bash
-GOOS=windows GOARCH=amd64 go build -o qr-sidekick.exe
-GOOS=darwin  GOARCH=arm64 go build -o qr-sidekick-mac
-GOOS=linux   GOARCH=amd64 go build -o qr-sidekick-linux
+GOOS=windows GOARCH=amd64 go build -o qrbas.exe
+GOOS=darwin  GOARCH=arm64 go build -o qrbas-mac
+GOOS=linux   GOARCH=amd64 go build -o qrbas-linux
 ```
 
 ## Options
@@ -32,7 +32,7 @@ GOOS=linux   GOARCH=amd64 go build -o qr-sidekick-linux
 | Flag | Default | Description |
 |------|---------|-------------|
 | `-port` | 8080 | Port to listen on |
-| `-data-dir` | ~/.qr-sidekick | Database directory |
+| `-data-dir` | ~/.qrbas | Database directory |
 
 ## How It Works
 

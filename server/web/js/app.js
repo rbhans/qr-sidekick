@@ -1,5 +1,5 @@
 /* ============================================
-   QR Sidekick — SPA Router + API Helpers
+   QRBAS — SPA Router + API Helpers
    ============================================ */
 
 const API = {

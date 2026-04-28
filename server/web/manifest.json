@@ -1,6 +1,6 @@
 {
-  "name": "QR Sidekick",
-  "short_name": "QR Sidekick",
+  "name": "QRBAS",
+  "short_name": "QRBAS",
   "description": "Scan equipment QR codes for live BAS data",
   "start_url": "/",
   "display": "standalone",

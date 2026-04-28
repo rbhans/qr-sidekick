@@ -1,4 +1,4 @@
-# QR Sidekick
+# QRBAS
 
 Self-hosted QR equipment pages for BAS teams. Run one small server on the local network, add Niagara stations, print QR codes for equipment, and let technicians scan with a phone camera to see live point data in the browser.
 
@@ -22,17 +22,17 @@ go run .
 
 Open `http://localhost:8080`, add a station from Admin, configure equipment, then print QR codes.
 
-The server stores data in `~/.qr-sidekick/qr_sidekick.db` by default. Use flags to change runtime behavior:
+The server stores data in `~/.qrbas/qrbas.db` by default. Use flags to change runtime behavior:
 
 ```bash
-go run . -port 8080 -data-dir ~/.qr-sidekick
+go run . -port 8080 -data-dir ~/.qrbas
 ```
 
 ## Build
 
 ```bash
 cd server
-go build -trimpath -ldflags="-s -w" -o qr-sidekick-server .
+go build -trimpath -ldflags="-s -w" -o qrbas-server .
 ```
 
 Cross-platform release builds are handled by `.github/workflows/release.yml` when pushing a `v*` tag.

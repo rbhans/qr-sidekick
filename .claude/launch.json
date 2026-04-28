@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "qr-server",
+      "name": "qrbas-server",
       "runtimeExecutable": "go",
       "runtimeArgs": ["run", "."],
       "port": 8080,

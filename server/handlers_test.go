@@ -207,7 +207,7 @@ func TestBuildEquipmentURL(t *testing.T) {
 		scheme, host, qrID, want string
 	}{
 		{"http", "192.168.1.50:8080", "abc", "http://192.168.1.50:8080/#/equipment/abc"},
-		{"https", "qrsidekick.local:8443", "xyz", "https://qrsidekick.local:8443/#/equipment/xyz"},
+		{"https", "qrbas.local:8443", "xyz", "https://qrbas.local:8443/#/equipment/xyz"},
 		{"http", "localhost:8080", "id1", "http://localhost:8080/#/equipment/id1"},
 	}
 	for _, c := range cases {
@@ -222,7 +222,7 @@ func TestNetworkInfoEndpoint(t *testing.T) {
 	srv := testServer(t)
 	srv.HTTPPort = 8080
 	srv.HTTPSPort = 8443
-	srv.MDNSHost = "qrsidekick.local"
+	srv.MDNSHost = "qrbas.local"
 	srv.CertPath = "/tmp/cert.pem"
 
 	req := httptest.NewRequest(http.MethodGet, "/api/network", nil)
@@ -236,7 +236,7 @@ func TestNetworkInfoEndpoint(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
 		t.Fatal(err)
 	}
-	if got["mdnsHost"] != "qrsidekick.local" {
+	if got["mdnsHost"] != "qrbas.local" {
 		t.Errorf("mdnsHost = %v", got["mdnsHost"])
 	}
 	if got["certAvailable"] != true {

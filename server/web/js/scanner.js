@@ -1,5 +1,5 @@
 /* ============================================
-   QR Sidekick — Scanner View
+   QRBAS — Scanner View
    ============================================ */
 
 let currentScanner = null;

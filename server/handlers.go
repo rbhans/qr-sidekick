@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// Server is the HTTP server for QR Sidekick.
+// Server is the HTTP server for QRBAS.
 type Server struct {
 	db         *Database
 	connectors *ConnectorRegistry
@@ -474,7 +474,7 @@ func (s *Server) handleQRCode(w http.ResponseWriter, r *http.Request) {
 		scheme = "http"
 	}
 	host := r.Host
-	// Allow override via query (?host=qrsidekick.local:8080) so admins can pick
+	// Allow override via query (?host=qrbas.local:8080) so admins can pick
 	// the hostname baked into printed QR codes.
 	if override := r.URL.Query().Get("host"); override != "" {
 		host = override
@@ -516,7 +516,7 @@ func (s *Server) handleDownloadCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/x-pem-file")
-	w.Header().Set("Content-Disposition", `attachment; filename="qrsidekick.pem"`)
+	w.Header().Set("Content-Disposition", `attachment; filename="qrbas.pem"`)
 	http.ServeFile(w, r, s.CertPath)
 }
 

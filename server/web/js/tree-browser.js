@@ -1,5 +1,5 @@
 /* ============================================
-   QR Sidekick — Station Tree Browser Modal
+   QRBAS — Station Tree Browser Modal
    ============================================ */
 
 function openTreeBrowser(stationId, onSelect) {

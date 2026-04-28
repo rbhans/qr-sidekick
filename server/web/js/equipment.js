@@ -1,5 +1,5 @@
 /* ============================================
-   QR Sidekick — Equipment Live Data View
+   QRBAS — Equipment Live Data View
    ============================================ */
 
 let equipmentRefreshInterval = null;
